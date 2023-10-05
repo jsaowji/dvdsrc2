@@ -6,5 +6,5 @@ cargo build
 
 
 #build on windows
-git archive --format=tar.gz -o myapp.tar.gz  master
+git archive --format=tar.gz -o myapp.tar.gz  main
 docker build . -o winbuild
