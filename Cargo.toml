@@ -1,0 +1,3 @@
+[workspace]
+members = [ "dvdsrccommon",  "dvdsrc2" ]
+resolver = "2"

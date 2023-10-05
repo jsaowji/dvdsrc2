@@ -1,0 +1,15 @@
+[package]
+name = "dvdsrc2"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+vapoursynth4-rs = {version = "0.2.0"}
+vapoursynth4-sys = {version = "0.2.0"}
+#vapoursynth4-rs = { path = "../../vapoursynth4-rs/vapoursynth4-rs" }
+#vapoursynth4-sys = { path = "../../vapoursynth4-rs/vapoursynth4-sys" }
+const-str = "0.5.6"
+dvdsrccommon = { path = "../dvdsrccommon" }

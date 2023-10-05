@@ -1,0 +1,12 @@
+/target
+dvdsrccommon/src/bindings/a52.rs
+dvdsrccommon/src/bindings/dvdread.rs
+dvdsrccommon/src/bindings/mpeg2.rs
+cases.txt
+test*.py
+.vspreview
+dvdsrccommon/json.hpp
+tmp/
+windows_libs/
+myapp.tar.gz
+winbuild/

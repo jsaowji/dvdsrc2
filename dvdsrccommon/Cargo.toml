@@ -1,0 +1,19 @@
+[package]
+name = "dvdsrccommon"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+byteorder = "1.4.3"
+home = "0.5.5"
+serde = "1.0.188"
+serde_derive = "1.0.188"
+bincode = { git = "https://github.com/bincode-org/bincode", rev = "08556caaa527ada2ae32cc847e2cafbeab9b30cb" }
+bson = "2.6.0"
+#serde_json = "*"
+#bincode = "2.0.0"
+
+#[build-dependencies]
+#cc = "1.0"
