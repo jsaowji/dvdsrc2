@@ -14,9 +14,8 @@ use vapoursynth4_rs::{
     node::{ActivationReason, Dependencies, Filter, FilterMode},
     VideoInfo,
 };
-use vapoursynth4_sys::VSMapAppendMode;
 
-use crate::open_dvd_vobus;
+use crate::{add_audio_props, open_dvd_vobus};
 
 struct FullFilterMutStuff {
     ac3info: AudioFramesInfo,
@@ -102,26 +101,8 @@ impl Filter for RawAc3Filter {
             let fl = stuff.ac3info.frame_length;
             let mut newframe = core.new_video_frame(&self.ai.format, fl as _, 1, None);
 
-            if n == 0 {
-                newframe
-                    .properties_mut()
-                    .unwrap()
-                    .set(
-                        key!("Stuff_Start_PTS"),
-                        vapoursynth4_rs::map::Value::Int(stuff.ac3info.pts_cutoff_start as _),
-                        VSMapAppendMode::Replace,
-                    )
-                    .unwrap();
-                newframe
-                    .properties_mut()
-                    .unwrap()
-                    .set(
-                        key!("Stuff_End_PTS"),
-                        vapoursynth4_rs::map::Value::Int(stuff.ac3info.pts_cut_end as _),
-                        VSMapAppendMode::Replace,
-                    )
-                    .unwrap();
-            }
+            add_audio_props(n as _, newframe.properties_mut().unwrap(), &stuff.ac3info);
+
             let buffer = std::slice::from_raw_parts_mut(newframe.plane_mut(0), fl as _);
 
             stuff

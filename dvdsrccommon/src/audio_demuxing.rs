@@ -42,6 +42,9 @@ pub fn raw_audio_frames_init(
     is_lpcm: bool,
 ) -> AudioFramesInfo {
     let is_ac3 = !is_lpcm;
+    let codec_packet_length = if is_ac3 { 2880 } else { 150 };
+
+    let mut pts_cut_end = 0;
 
     let real_stream_idx = audio as u8 + if is_ac3 { 0x80 } else { 0xA0 };
 
@@ -51,16 +54,38 @@ pub fn raw_audio_frames_init(
         let after_vobu = &index.vobus[after_i];
 
         let next_vobu_start = after_vobu.first_ptm;
-        if after_vobu
+        let strmm = after_vobu
             .streams
             .iter()
             .find(|e| e.id == real_stream_idx)
-            .unwrap()
-            .packets
-            .know_units[0]
-            .pts
-            < next_vobu_start
-        {
+            .unwrap();
+
+        if strmm.packets.know_units[0].pts < next_vobu_start {
+            let mut our_cntt = 0;
+            let mut cut_pts = 0;
+            'outer: for (_, a) in strmm.packets.know_units.iter().enumerate() {
+                for j in 0..a.frame_cnt as u32 {
+                    let frame_length = codec_packet_length;
+                    let frame_start = a.pts + frame_length * (j);
+                    // let frame_end = a.pts + frame_length * (j + 1);
+
+                    if frame_start >= next_vobu_start {
+                        break 'outer;
+                    } else {
+                        cut_pts = next_vobu_start - frame_start
+                    }
+                    our_cntt += 1;
+                }
+            }
+            let their_packets_left = strmm
+                .packets
+                .know_units
+                .iter()
+                .fold(0, |a, b| a + b.frame_cnt) as u32
+                - our_cntt;
+            pts_cut_end = their_packets_left * codec_packet_length - cut_pts;
+            //pts_cut_end
+
             vobus.push(EVobu {
                 i: after_i,
                 v: after_vobu.clone(),
@@ -142,7 +167,7 @@ pub fn raw_audio_frames_init(
     'outer: for (_, a) in vobu0strems.packets.know_units.iter().enumerate() {
         //dbg!(a.pts, vobus[0].first_ptm);
         for j in 0..a.frame_cnt as u32 {
-            let frame_length = if is_ac3 { 2880 } else { 150 };
+            let frame_length = codec_packet_length;
             let frame_start = a.pts + frame_length * (j);
             let frame_end = a.pts + frame_length * (j + 1);
             if frame_end >= vobus[0].v.first_ptm {
@@ -221,7 +246,7 @@ pub fn raw_audio_frames_init(
         frame_length: packet_lenght as _,
         frame_cnt,
         pts_cutoff_start: start_offset_pts as u32,
-        pts_cut_end: 0,
+        pts_cut_end: pts_cut_end as _,
 
         samples_per_frame: samples_per_frame as _,
         lpcm_quant: lpcm_quant as _,

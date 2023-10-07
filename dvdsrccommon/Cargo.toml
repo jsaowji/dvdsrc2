@@ -15,5 +15,6 @@ bson = "2.6.0"
 #serde_json = "*"
 #bincode = "2.0.0"
 
-#[build-dependencies]
+[build-dependencies]
 #cc = "1.0"
+pkg-config = "0.3.27"

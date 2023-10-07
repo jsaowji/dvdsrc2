@@ -4,15 +4,13 @@ mod full_vts_video;
 mod ifo_file;
 mod raw_ac3;
 
-use std::{ffi::CString, ptr::null_mut};
-
 use dvdsrccommon::{
-    bindings::dvdread::DVDOpen2,
+    audio_demuxing::AudioFramesInfo,
     do_index_dvd::{get_index_vts, OpenDvdBlockReader},
     dvdio::{cache_seek_reader::CacheSeekReader, proper_dvd_reader::ProperDvdReader},
     index::IndexedVts,
+    open_dvd,
     vobu_range::*,
-    LOGGER_CB,
 };
 use full_vts_ac3::*;
 use full_vts_lpcm::*;
@@ -21,7 +19,11 @@ use ifo_file::*;
 use raw_ac3::*;
 
 use const_str::cstr;
-use vapoursynth4_rs::{declare_plugin, key, map::MapRef};
+use vapoursynth4_rs::{
+    declare_plugin, key,
+    map::{MapMut, MapRef},
+};
+use vapoursynth4_sys::VSMapAppendMode;
 
 declare_plugin!(
     "com.jsaowji.dvdsrc2c",
@@ -80,9 +82,7 @@ fn open_dvd_vobus(input: MapRef<'_>) -> OpenDvdVobus {
 
     let vobus = VobuRanger::from(&ranges, &indexv);
 
-    let cas = CString::new(dvdpath).unwrap();
-    let dvd = unsafe { DVDOpen2(null_mut(), &LOGGER_CB, cas.as_ptr()) };
-    assert!(!dvd.is_null());
+    let dvd = open_dvd(dvdpath.try_into().unwrap()).unwrap();
 
     let reader = OpenDvdBlockReader::new(dvd, vts as _).reader;
 
@@ -90,5 +90,24 @@ fn open_dvd_vobus(input: MapRef<'_>) -> OpenDvdVobus {
         indexed: indexv,
         vobus,
         reader,
+    }
+}
+
+fn add_audio_props(n: i64, mut props: MapMut<'_>, ainfo: &AudioFramesInfo) {
+    if n == 0 {
+        props
+            .set(
+                key!("Stuff_Start_PTS"),
+                vapoursynth4_rs::map::Value::Int(ainfo.pts_cutoff_start as _),
+                VSMapAppendMode::Replace,
+            )
+            .unwrap();
+        props
+            .set(
+                key!("Stuff_End_PTS"),
+                vapoursynth4_rs::map::Value::Int(ainfo.pts_cut_end as _),
+                VSMapAppendMode::Replace,
+            )
+            .unwrap();
     }
 }

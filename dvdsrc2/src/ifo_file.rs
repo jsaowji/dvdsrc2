@@ -1,15 +1,14 @@
-use std::{
-    ffi::{c_void, CStr, CString},
-    ptr::null_mut,
-};
+use std::ffi::{c_void, CStr, CString};
 
 use const_str::cstr;
 use dvdsrccommon::{
-    bindings::dvdread::{
-        dvd_read_domain_t_DVD_READ_INFO_FILE, DVDClose, DVDCloseFile, DVDFileStat, DVDOpen2,
-        DVDOpenFile, DVDReadBytes,
-    },
-    LOGGER_CB,
+    bindings::dvdread::DVDClose,
+    do_index_dvd::get_ifo_file,
+    //bindings::dvdread::{
+    //    dvd_read_domain_t_DVD_READ_INFO_FILE, DVDClose, DVDCloseFile, DVDFileStat, DVDOpenFile,
+    //    DVDReadBytes, dvd_reader_t,
+    //},
+    open_dvd,
 };
 use vapoursynth4_rs::{
     core::CoreRef,
@@ -36,36 +35,18 @@ impl Filter for IfoFile {
         let dvdpath = input.get_utf8(key!("path"), 0).expect("Failed to get clip");
         let ifo = input.get_int(key!("ifo"), 0).expect("Failed to get clip");
 
-        let cas = CString::new(dvdpath).unwrap();
-        let dvd = unsafe { DVDOpen2(null_mut(), &LOGGER_CB, cas.as_ptr()) };
-        assert!(!dvd.is_null());
+        let dvd = open_dvd(dvdpath.try_into().unwrap()).unwrap();
 
+        let buffer = get_ifo_file(dvd, ifo as _);
+
+        output
+            .set(
+                key!("file_data"),
+                vapoursynth4_rs::map::Value::Data(&buffer),
+                VSMapAppendMode::Replace,
+            )
+            .unwrap();
         unsafe {
-            let mut stat = std::mem::zeroed();
-
-            DVDFileStat(
-                dvd,
-                ifo as _,
-                dvd_read_domain_t_DVD_READ_INFO_FILE,
-                &mut stat,
-            );
-            let ifofilesize = stat.size;
-            let file = DVDOpenFile(dvd, ifo as _, dvd_read_domain_t_DVD_READ_INFO_FILE);
-
-            let mut buffer = vec![0u8; ifofilesize as usize];
-
-            let rdrd = DVDReadBytes(file, buffer.as_mut_ptr() as _, ifofilesize as _);
-            assert_eq!(rdrd as usize, buffer.len());
-
-            output
-                .set(
-                    key!("file_data"),
-                    vapoursynth4_rs::map::Value::Data(&buffer),
-                    VSMapAppendMode::Replace,
-                )
-                .unwrap();
-
-            DVDCloseFile(file);
             DVDClose(dvd);
         }
 

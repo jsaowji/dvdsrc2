@@ -8,7 +8,7 @@ use const_str::cstr;
 use dvdsrccommon::audio_demuxing::{raw_audio_frames_init, AudioFramesInfo};
 use vapoursynth4_rs::{
     core::CoreRef,
-    frame::{AudioFrame, FrameContext},
+    frame::{AudioFrame, Frame, FrameContext},
     key,
     map::{MapMut, MapRef},
     node::{ActivationReason, Dependencies, Filter, FilterMode},
@@ -16,7 +16,7 @@ use vapoursynth4_rs::{
 };
 use vapoursynth4_sys::VS_AUDIO_FRAME_SAMPLES;
 
-use crate::open_dvd_vobus;
+use crate::{add_audio_props, open_dvd_vobus};
 
 struct FullFilterMutStuff {
     ac3info: AudioFramesInfo,
@@ -106,6 +106,8 @@ impl Filter for FullVtsFilterLpcm {
             );
 
             let mut newframe = core.new_audio_frame(&self.ai.format, num_samples_want as _, None);
+
+            add_audio_props(n as _, newframe.properties_mut().unwrap(), &stuff.ac3info);
 
             let byte_per_src_sample_chblock =
                 (stuff.ac3info.lpcm_quant * stuff.ac3info.lpcm_channels) / 8;

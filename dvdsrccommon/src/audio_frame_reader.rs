@@ -79,6 +79,8 @@ pub fn demux_audio(
     audio_stream_id: u8,
     strip_pcm: bool,
 ) -> Result<(), Box<dyn Error>> {
+    let is_lpcm = audio_stream_id >= 0xA0 && audio_stream_id <= 0xa7;
+
     let mut packets_already = 0;
 
     let mut scratch = [0u8; 2048];
@@ -102,22 +104,19 @@ pub fn demux_audio(
                     let pes = pes.inner.into_inner();
                     if pes[0] == audio_stream_id {
                         audio_data_buffer.extend_from_slice(
-                            &pes[4 + if strip_pcm
-                                && (audio_stream_id >= 0xA0 && audio_stream_id <= 0xa7)
-                            {
-                                3
+                            &pes[4 + if strip_pcm && is_lpcm { 3 } else { 0 }..],
+                        );
+                        packets_already += 1;
+                        let adjeln = sz2
+                            - if strip_pcm && is_lpcm {
+                                3 * packets_already
                             } else {
                                 0
-                            }..],
-                        );
-                    }
-                    packets_already += 1;
-
-                    let adjeln = sz2 - if strip_pcm { 3 * packets_already } else { 0 };
-
-                    assert!(audio_data_buffer.len() <= adjeln);
-                    if audio_data_buffer.len() == adjeln {
-                        return Ok(());
+                            };
+                        assert!(audio_data_buffer.len() <= adjeln);
+                        if audio_data_buffer.len() == adjeln {
+                            return Ok(());
+                        }
                     }
                 }
                 e => {

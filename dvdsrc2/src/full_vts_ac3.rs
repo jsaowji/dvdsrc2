@@ -12,14 +12,14 @@ use dvdsrccommon::{
 use vapoursynth4_rs::{
     core::CoreRef,
     ffi::{VSAudioChannels, VS_AUDIO_FRAME_SAMPLES},
-    frame::{AudioFrame, FrameContext},
+    frame::{AudioFrame, Frame, FrameContext},
     key,
     map::{MapMut, MapRef},
     node::{ActivationReason, Dependencies, Filter, FilterMode},
     AudioInfo,
 };
 
-use crate::open_dvd_vobus;
+use crate::{add_audio_props, open_dvd_vobus};
 
 struct FullFilterMutStuff {
     ac3info: AudioFramesInfo,
@@ -165,6 +165,8 @@ impl Filter for FullVtsFilterAc3 {
                 },
                 None,
             );
+            add_audio_props(n as _, newframe.properties_mut().unwrap(), ac3info);
+
             let channel_cnt = self.ai.format.num_channels;
 
             if latest_n + 1 != n && !(n == 0) {
