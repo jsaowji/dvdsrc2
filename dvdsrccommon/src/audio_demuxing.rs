@@ -48,6 +48,7 @@ pub fn raw_audio_frames_init(
 
     let real_stream_idx = audio as u8 + if is_ac3 { 0x80 } else { 0xA0 };
 
+    //TODO: ENDS WITH LAST VOBU WITH AUDIO
     let ends_with_last_vobu = vobus[vobus.len() - 1].i == index.vobus.len() - 1;
     if !ends_with_last_vobu {
         let after_i = vobus[vobus.len() - 1].i + 1;
@@ -189,6 +190,7 @@ pub fn raw_audio_frames_init(
 
     let mut audioframevobus = Vec::new();
 
+    //TODO: LAST WITH AUDIO
     let mut sz = 0;
     let last_i = vobus.len() - 1;
     for v in vobus.iter().enumerate() {

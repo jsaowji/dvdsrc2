@@ -30,9 +30,10 @@ pub fn get_index_vts(a: &str, vts: u8) -> IndexedVts {
     let fz = dd.join(format!("{vts}.bin"));
 
     if fz.exists() {
-        if let Ok(e) =
-            bincode::decode_from_std_read(&mut File::open(fz).unwrap(), bincode::config::standard())
-        {
+        if let Ok(e) = bincode::decode_from_std_read(
+            &mut File::open(&fz).unwrap(),
+            bincode::config::standard(),
+        ) {
             return e;
         }
 
@@ -40,9 +41,9 @@ pub fn get_index_vts(a: &str, vts: u8) -> IndexedVts {
         //    return e;
         //}
 
-        //if let Ok(e) = serde_json::from_reader(File::open(fz).unwrap()) {
-        //    return e;
-        //}
+        //        if let Ok(e) = serde_json::from_reader(File::open(&fz).unwrap()) {
+        //            return e;
+        //        }
     }
     do_index_vts(a, vts as _).unwrap();
     return get_index_vts(a, vts);
@@ -59,6 +60,7 @@ pub fn do_index_vts<P: AsRef<Path>>(stra: P, i: i32) -> Result<(), Box<dyn std::
     let value = do_index(dvd, i).unwrap();
 
     let cnts = bincode::encode_to_vec(&value, bincode::config::standard()).unwrap();
+    //serde_json::to_writer(File::create(dir.join(format!("{i}.json"))).unwrap(), &value).unwrap();
 
     std::fs::write(dir.join(format!("{i}.bin")), cnts).unwrap();
     unsafe {
@@ -151,44 +153,45 @@ fn do_index(dvd: *mut dvd_reader_s, vts: i32) -> Result<IndexedVts, std::io::Err
                          video_data: &mut Vec<u8>,
                          frames_seen: &mut usize| {
         current_vobu.mpeg2_video_size = video_data.len() as _;
-        let mut gape = Gopaliser::doit(&video_data).unwrap();
+        if video_data.len() > 0 {
+            let mut gape = Gopaliser::doit(&video_data).unwrap();
 
-        for g in &mut gape.0 {
-            *frames_seen += g.frames.len();
+            for g in &mut gape.0 {
+                *frames_seen += g.frames.len();
 
-            let fcnt = g.frames.len();
+                let fcnt = g.frames.len();
 
-            let fclone = g.frames.clone();
-            for a in &mut g.frames {
-                let currenttr = a.temporal_reference;
-                if currenttr >= fcnt as u8 {
-                    let maxi = fclone
-                        .iter()
-                        .filter(|e| e.temporal_reference != currenttr)
-                        .map(|e| e.temporal_reference)
-                        .max();
-                    a.temporal_reference = maxi.unwrap() + 1;
-                    eprintln!("FOUND BAD TEMPORAL REFERENCE TRYING TO FIX\nWILL ONLY WORK IF ITS THE ONE CASE I SAW");
+                let fclone = g.frames.clone();
+                for a in &mut g.frames {
+                    let currenttr = a.temporal_reference;
+                    if currenttr >= fcnt as u8 {
+                        let maxi = fclone
+                            .iter()
+                            .filter(|e| e.temporal_reference != currenttr)
+                            .map(|e| e.temporal_reference)
+                            .max();
+                        a.temporal_reference = maxi.unwrap() + 1;
+                        eprintln!("FOUND BAD TEMPORAL REFERENCE TRYING TO FIX\nWILL ONLY WORK IF ITS THE ONE CASE I SAW");
+                    }
                 }
+                let mut sort_frames = g.frames.clone();
+
+                sort_frames.sort_by(|a, b| {
+                    a.temporal_reference
+                        .partial_cmp(&b.temporal_reference)
+                        .unwrap()
+                });
+
+                assert_eq!(sort_frames[0].temporal_reference, 0);
+                assert_eq!(
+                    sort_frames[sort_frames.len() - 1].temporal_reference,
+                    sort_frames.len() as u8 - 1
+                );
             }
-            let mut sort_frames = g.frames.clone();
-
-            sort_frames.sort_by(|a, b| {
-                a.temporal_reference
-                    .partial_cmp(&b.temporal_reference)
-                    .unwrap()
-            });
-
-            assert_eq!(sort_frames[0].temporal_reference, 0);
-            assert_eq!(
-                sort_frames[sort_frames.len() - 1].temporal_reference,
-                sort_frames.len() as u8 - 1
-            );
+            video_data.clear();
+            current_vobu.gops = gape.0;
+            current_vobu.mpeg2_has_seq_end = gape.1;
         }
-
-        video_data.clear();
-        current_vobu.gops = gape.0;
-        current_vobu.mpeg2_has_seq_end = gape.1;
 
         //flush current vobu
         vobus.push(current_vobu.clone());
@@ -208,6 +211,9 @@ fn do_index(dvd: *mut dvd_reader_s, vts: i32) -> Result<IndexedVts, std::io::Err
         loop {
             let nxt = start_code(&mut b)?;
             let sz = b.read_u16::<BE>()? as usize;
+            //if crnt >= (6.5 * 1024.0 * 1024.0 * 1024.0) as _{
+            //    println!("{}   {:X}",crnt,nxt);
+            //}
 
             match nxt {
                 0xBF => {
@@ -265,6 +271,10 @@ fn do_index(dvd: *mut dvd_reader_s, vts: i32) -> Result<IndexedVts, std::io::Err
                     let veca = pes.inner.into_inner();
 
                     let id = veca[0];
+
+                    //                    if crnt >= (6.5 * 1024.0 * 1024.0 * 1024.0) as _{
+                    //                        dbg!(id);
+                    //                    }
                     let is_ac3 = id >= 0x80 && id <= 0x87;
                     let is_lpcm = id >= 0xA0 && id <= 0xA7;
                     if is_ac3 || is_lpcm {

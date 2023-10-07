@@ -211,6 +211,7 @@ impl Filter for FullVtsFilter {
             let info = mpeg2_info(mpeg2dec);
 
             let target_vobu = self.vobu_lookup[n as usize];
+            //TODO: LAST VOBU WITH VIDEO
             let last_vobu = self.vobus.len() - 1 == target_vobu as usize;
 
             let vobu = &self.vobus[target_vobu];
@@ -222,6 +223,7 @@ impl Filter for FullVtsFilter {
 
             //let did_acually_rebuf = rebuf && can_rebuf;
             if rebuf && can_rebuf {
+                //TODO: PREV VOBU WITH VIDEO
                 let pre_vobu = &self.vobus[target_vobu - 1];
 
                 let mut buffer = Vec::with_capacity(pre_vobu.mpeg2_video_size as usize + 4);
@@ -491,6 +493,9 @@ fn demux_video(
     sz2: usize,
     video_buffer: &mut Vec<u8>,
 ) -> Result<(), Box<dyn Error>> {
+    if sz2 == 0 {
+        return Ok(());
+    }
     let mut scratch = [0u8; 2048];
     let mut buffer = [0u8; 2048];
     loop {
