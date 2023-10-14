@@ -92,6 +92,8 @@ impl Filter for FullVtsFilterAc3 {
                 let num_frames = (num_samples + VS_AUDIO_FRAME_SAMPLES as i64 - 1)
                     / VS_AUDIO_FRAME_SAMPLES as i64;
 
+                //assert_eq!(ac3info.frame_cnt as i64, num_frames * 2);
+
                 let ai = AudioInfo {
                     format: vapoursynth4_rs::ffi::VSAudioFormat {
                         sample_type: vapoursynth4_rs::ffi::VSSampleType::Float,
@@ -152,13 +154,13 @@ impl Filter for FullVtsFilterAc3 {
             assert_eq!(VS_AUDIO_FRAME_SAMPLES / (6 * 256), 2);
             assert_eq!(VS_AUDIO_FRAME_SAMPLES % (6 * 256), 0);
 
-            let is_lastt = n + 1 == self.ai.num_frames;
+            let is_lastt = (n + 1) == self.ai.num_frames;
 
             let mut level = 1.0;
 
             let mut newframe = core.new_audio_frame(
                 &self.ai.format,
-                if is_lastt {
+                if is_lastt && (self.ai.num_samples as i64 % VS_AUDIO_FRAME_SAMPLES as i64) != 0 {
                     VS_AUDIO_FRAME_SAMPLES / 2
                 } else {
                     VS_AUDIO_FRAME_SAMPLES

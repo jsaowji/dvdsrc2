@@ -1,7 +1,7 @@
 
 # how to build linux
-install a52dec mpeg2dec libdvdread rust
-cargo build
+install a52dec mpeg2dec libdvdread rust 
+cargo build 
 
 
 #msys

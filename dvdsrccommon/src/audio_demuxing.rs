@@ -186,7 +186,7 @@ pub fn raw_audio_frames_init(
             }
         }
     }
-    dbg!(start_byte_offset, start_offset_pts);
+//    dbg!(start_byte_offset, start_offset_pts);
 
     let mut audioframevobus = Vec::new();
 
@@ -199,8 +199,12 @@ pub fn raw_audio_frames_init(
             v.1.v
                 .streams
                 .iter()
-                .find(|e| e.id == real_stream_idx)
-                .unwrap();
+                .find(|e| e.id == real_stream_idx);
+            if aua.is_none() {
+                eprintln!("VOBU without audio: {}",v.1.i);
+                continue;
+            }
+            let aua =aua.unwrap();
 
         // dbg!(aua.packets.abs_packet_cnt);
         let real_demuxed_size = aua.packets.total_bytes

@@ -41,9 +41,9 @@ pub fn get_index_vts(a: &str, vts: u8) -> IndexedVts {
         //    return e;
         //}
 
-        //        if let Ok(e) = serde_json::from_reader(File::open(&fz).unwrap()) {
-        //            return e;
-        //        }
+        // if let Ok(e) = serde_json::from_reader(File::open(&fz).unwrap()) {
+        //     return e;
+        // }
     }
     do_index_vts(a, vts as _).unwrap();
     return get_index_vts(a, vts);
@@ -60,7 +60,9 @@ pub fn do_index_vts<P: AsRef<Path>>(stra: P, i: i32) -> Result<(), Box<dyn std::
     let value = do_index(dvd, i).unwrap();
 
     let cnts = bincode::encode_to_vec(&value, bincode::config::standard()).unwrap();
-    //serde_json::to_writer(File::create(dir.join(format!("{i}.json"))).unwrap(), &value).unwrap();
+    if std::env::var("DVD_DEBUG").is_ok() {
+        serde_json::to_writer(File::create(dir.join(format!("{i}.json"))).unwrap(), &value).unwrap();
+    }
 
     std::fs::write(dir.join(format!("{i}.bin")), cnts).unwrap();
     unsafe {
@@ -272,9 +274,9 @@ fn do_index(dvd: *mut dvd_reader_s, vts: i32) -> Result<IndexedVts, std::io::Err
 
                     let id = veca[0];
 
-                    //                    if crnt >= (6.5 * 1024.0 * 1024.0 * 1024.0) as _{
-                    //                        dbg!(id);
-                    //                    }
+                    // if crnt >= (6.5 * 1024.0 * 1024.0 * 1024.0) as _{
+                    //     dbg!(id);
+                    // }
                     let is_ac3 = id >= 0x80 && id <= 0x87;
                     let is_lpcm = id >= 0xA0 && id <= 0xA7;
                     if is_ac3 || is_lpcm {
