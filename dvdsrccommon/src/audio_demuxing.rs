@@ -55,42 +55,42 @@ pub fn raw_audio_frames_init(
         let after_vobu = &index.vobus[after_i];
 
         let next_vobu_start = after_vobu.first_ptm;
-        let strmm = after_vobu
-            .streams
-            .iter()
-            .find(|e| e.id == real_stream_idx)
-            .unwrap();
 
-        if strmm.packets.know_units[0].pts < next_vobu_start {
-            let mut our_cntt = 0;
-            let mut cut_pts = 0;
-            'outer: for (_, a) in strmm.packets.know_units.iter().enumerate() {
-                for j in 0..a.frame_cnt as u32 {
-                    let frame_length = codec_packet_length;
-                    let frame_start = a.pts + frame_length * (j);
-                    // let frame_end = a.pts + frame_length * (j + 1);
+        //TODO: investigate
+        let strmm = after_vobu.streams.iter().find(|e| e.id == real_stream_idx);
+        if let Some(strmm) = strmm {
+            if strmm.packets.know_units[0].pts < next_vobu_start {
+                let mut our_cntt = 0;
+                let mut cut_pts = 0;
+                'outer: for (_, a) in strmm.packets.know_units.iter().enumerate() {
+                    for j in 0..a.frame_cnt as u32 {
+                        let frame_length = codec_packet_length;
+                        let frame_start = a.pts + frame_length * (j);
+                        // let frame_end = a.pts + frame_length * (j + 1);
 
-                    if frame_start >= next_vobu_start {
-                        break 'outer;
-                    } else {
-                        cut_pts = next_vobu_start - frame_start
+                        if frame_start >= next_vobu_start {
+                            break 'outer;
+                        } else {
+                            cut_pts = next_vobu_start - frame_start
+                        }
+                        our_cntt += 1;
                     }
-                    our_cntt += 1;
                 }
-            }
-            let their_packets_left = strmm
-                .packets
-                .know_units
-                .iter()
-                .fold(0, |a, b| a + b.frame_cnt) as u32
-                - our_cntt;
-            pts_cut_end = their_packets_left * codec_packet_length - cut_pts;
-            //pts_cut_end
+                let their_packets_left = strmm
+                    .packets
+                    .know_units
+                    .iter()
+                    .fold(0, |a, b| a + b.frame_cnt)
+                    as u32
+                    - our_cntt;
+                pts_cut_end = their_packets_left * codec_packet_length - cut_pts;
+                //pts_cut_end
 
-            vobus.push(EVobu {
-                i: after_i,
-                v: after_vobu.clone(),
-            });
+                vobus.push(EVobu {
+                    i: after_i,
+                    v: after_vobu.clone(),
+                });
+            }
         }
     }
 
@@ -186,7 +186,7 @@ pub fn raw_audio_frames_init(
             }
         }
     }
-//    dbg!(start_byte_offset, start_offset_pts);
+    //    dbg!(start_byte_offset, start_offset_pts);
 
     let mut audioframevobus = Vec::new();
 
@@ -195,16 +195,12 @@ pub fn raw_audio_frames_init(
     let last_i = vobus.len() - 1;
     for v in vobus.iter().enumerate() {
         let is_last = v.0 == last_i;
-        let aua =
-            v.1.v
-                .streams
-                .iter()
-                .find(|e| e.id == real_stream_idx);
-            if aua.is_none() {
-                eprintln!("VOBU without audio: {}",v.1.i);
-                continue;
-            }
-            let aua =aua.unwrap();
+        let aua = v.1.v.streams.iter().find(|e| e.id == real_stream_idx);
+        if aua.is_none() {
+            eprintln!("VOBU without audio: {}", v.1.i);
+            continue;
+        }
+        let aua = aua.unwrap();
 
         // dbg!(aua.packets.abs_packet_cnt);
         let real_demuxed_size = aua.packets.total_bytes

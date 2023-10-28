@@ -61,7 +61,8 @@ pub fn do_index_vts<P: AsRef<Path>>(stra: P, i: i32) -> Result<(), Box<dyn std::
 
     let cnts = bincode::encode_to_vec(&value, bincode::config::standard()).unwrap();
     if std::env::var("DVD_DEBUG").is_ok() {
-        serde_json::to_writer(File::create(dir.join(format!("{i}.json"))).unwrap(), &value).unwrap();
+        serde_json::to_writer(File::create(dir.join(format!("{i}.json"))).unwrap(), &value)
+            .unwrap();
     }
 
     std::fs::write(dir.join(format!("{i}.bin")), cnts).unwrap();

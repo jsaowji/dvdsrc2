@@ -576,6 +576,7 @@ fn tag_frame2(mut props: MapMut<'_>, tff: bool, prog: bool, ft: FrameType) {
         )
         .unwrap();
 }
+
 fn tag_frame1(mut props: MapMut<'_>, seq: mpeg2_sequence_t) {
     let primaries = match seq.colour_primaries {
         1 => VSColorPrimaries::VSC_PRIMARIES_BT709,
@@ -632,4 +633,33 @@ fn tag_frame1(mut props: MapMut<'_>, seq: mpeg2_sequence_t) {
             VSMapAppendMode::Replace,
         )
         .unwrap();
+
+    //SAR
+    if seq.pixel_width > 0 && seq.pixel_height > 0 {
+        let mut pw = 0;
+        let mut ph = 0;
+
+        let ret =
+            unsafe { dvdsrccommon::bindings::mpeg2::mpeg2_guess_aspect(&seq, &mut pw, &mut ph) };
+
+        if ret == 0 {
+            pw = seq.pixel_width;
+            ph = seq.pixel_height;
+        }
+
+        props
+            .set(
+                key!("_SARNum"),
+                Value::Int(pw as _),
+                VSMapAppendMode::Replace,
+            )
+            .unwrap();
+        props
+            .set(
+                key!("_SARDen"),
+                Value::Int(ph as _),
+                VSMapAppendMode::Replace,
+            )
+            .unwrap();
+    }
 }
