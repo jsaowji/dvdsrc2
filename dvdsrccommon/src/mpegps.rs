@@ -39,8 +39,14 @@ pub struct Pes {
     pub inner: Cursor<Vec<u8>>,
 }
 pub fn pes(mut rdd: impl Read, sz: usize) -> Result<Pes, std::io::Error> {
-    let _a = rdd.read_u8()?;
+    let a = rdd.read_u8()?;
+    _ = a;
+    //assert_eq!(a & 4,0);
+    //assert_eq!( (a & 0b11000000) >> 6,2);
+
     let b = rdd.read_u8()?;
+    //assert!(b & 0b00100000 == 0);
+    //assert!(b & 0b00010000 == 0);
     let c = rdd.read_u8()?;
 
     let mut buf = [0; 64];

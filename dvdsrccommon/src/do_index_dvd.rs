@@ -211,6 +211,11 @@ fn do_index(dvd: *mut dvd_reader_s, vts: i32) -> Result<IndexedVts, std::io::Err
 
         assert_eq!(start_code(&mut b)?, 0xBA);
         b.read_exact(&mut scratch[0..10])?;
+
+        //TODO: add
+        //let stuff = scratch[9] & 0b00000111;
+        //assert_eq!(stuff,0);
+
         loop {
             let nxt = start_code(&mut b)?;
             let sz = b.read_u16::<BE>()? as usize;
@@ -377,7 +382,19 @@ impl Gopaliser {
 
         let mut statey = 0;
 
-        assert_eq!(video_data[0..4], [0x00, 0x00, 0x01, 0xB3]);
+        //assert_eq!(video_data[0..4], [0x00, 0x00, 0x01, 0xB3]);
+        loop {
+            if video_data[ii..ii + 4] == [0x00, 0x00, 0x01, 0xB3] {
+                break;
+            }
+            ii += 1;
+            if ii > 10 {
+                panic!("something went wrong");
+            }
+        }
+        if ii != 0 {
+            eprintln!("Please open issue i am looking for more samples of this phenomen");
+        }
 
         loop {
             //let st = start_code(&mut b).unwrap();
@@ -487,6 +504,7 @@ pub fn get_ifo_file(dvd: *mut dvd_reader_t, ifo: u8) -> Vec<u8> {
         );
         let ifofilesize = stat.size;
         let file = DVDOpenFile(dvd, ifo as _, dvd_read_domain_t_DVD_READ_INFO_FILE);
+        assert_eq!(file.is_null(), false);
 
         let mut buffer = vec![0u8; ifofilesize as usize];
 

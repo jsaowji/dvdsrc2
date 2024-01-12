@@ -73,6 +73,7 @@ impl Filter for FullVtsFilter {
 
     fn create(
         input: MapRef<'_>,
+        //mut output: MapMut<'_>,
         output: MapMut<'_>,
         _data: Option<Box<Self::FilterData>>,
         mut core: CoreRef,
@@ -174,7 +175,12 @@ impl Filter for FullVtsFilter {
             };
 
             let deps = [];
-
+            //output.set(
+            //    key!("info"),
+            //    vapoursynth4_rs::map::Value::VideoFrame(filter.info_frame.clone()),
+            //    VSMapAppendMode::Replace,
+            //)
+            //.unwrap();
             core.create_video_filter(
                 output,
                 cstr!("FullVts"),
@@ -485,6 +491,7 @@ impl Filter for FullVtsFilter {
     const NAME: &'static CStr = cstr!("FullVts");
     const ARGS: &'static CStr = cstr!("path:data;vts:int;ranges:int[]:opt;");
     const RETURN_TYPE: &'static CStr = cstr!("clip:vnode;");
+    //const RETURN_TYPE: &'static CStr = cstr!("clip:vnode;info:vframe;");
     const FILTER_MODE: FilterMode = FilterMode::Unordered;
 }
 
