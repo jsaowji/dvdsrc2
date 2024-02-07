@@ -109,7 +109,7 @@ checksum = "f2696e8a945f658fd14dc3b87242e6b80cd0f36ff04ea560fa39082368847946"
 
 [[package]]
 name = "dvdsrc2"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "const-str",
  "dvdsrccommon",
@@ -119,7 +119,7 @@ dependencies = [
 
 [[package]]
 name = "dvdsrccommon"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "bincode",
  "bson",

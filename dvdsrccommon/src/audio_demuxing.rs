@@ -12,9 +12,11 @@ use crate::{
 pub struct XAudioFrameVobuInfo {
     pub sector_start: u32,
     pub demuxed_absolute_offset: u32,
+
     pub real_real_demuxed_size: u32,
     pub real_demuxed_size: u32,
     pub demuxed_size: u32,
+
     pub cut_front: usize,
     pub cut_back: usize,
 }
@@ -24,7 +26,12 @@ pub struct AudioFramesInfo {
     pub ac3_fingerprint: (i32, i32, i32),
     pub frame_cnt: u32,
     pub frame_length: u32,
-    pub pts_cutoff_start: u32,
+
+    //cutoff
+    //pos values mean cutoff
+    //neg mean add padding
+    pub pts_cutoff_start: i64,
+
     pub pts_cut_end: u32,
 
     pub samples_per_frame: u32,
@@ -49,8 +56,8 @@ pub fn raw_audio_frames_init(
     let real_stream_idx = audio as u8 + if is_ac3 { 0x80 } else { 0xA0 };
 
     //TODO: ENDS WITH LAST VOBU WITH AUDIO
-    let ends_with_last_vobu = vobus[vobus.len() - 1].i == index.vobus.len() - 1;
-    if !ends_with_last_vobu {
+    let ends_with_vts_last_vobu = vobus[vobus.len() - 1].i == index.vobus.len() - 1;
+    if !ends_with_vts_last_vobu {
         let after_i = vobus[vobus.len() - 1].i + 1;
         let after_vobu = &index.vobus[after_i];
 
@@ -171,6 +178,7 @@ pub fn raw_audio_frames_init(
             let frame_length = codec_packet_length;
             let frame_start = a.pts + frame_length * (j);
             let frame_end = a.pts + frame_length * (j + 1);
+
             if frame_end >= vobus[0].v.first_ptm {
                 //TODO: this can be improved
                 //if is_ac3 {
@@ -186,7 +194,6 @@ pub fn raw_audio_frames_init(
             }
         }
     }
-    //    dbg!(start_byte_offset, start_offset_pts);
 
     let mut audioframevobus = Vec::new();
 
@@ -197,10 +204,7 @@ pub fn raw_audio_frames_init(
         let is_last = v.0 == last_i;
         let aua = v.1.v.streams.iter().find(|e| e.id == real_stream_idx);
         if aua.is_none() {
-            eprintln!(
-                "WARNING: Found a VOBU without audio: {}",
-                v.1.i
-            );
+            eprintln!("WARNING: Found a VOBU without audio: {}", v.1.i);
             continue;
         }
         let aua = aua.unwrap();
@@ -250,7 +254,7 @@ pub fn raw_audio_frames_init(
         ac3_fingerprint,
         frame_length: packet_lenght as _,
         frame_cnt,
-        pts_cutoff_start: start_offset_pts as u32,
+        pts_cutoff_start: start_offset_pts as i64,
         pts_cut_end: pts_cut_end as _,
 
         samples_per_frame: samples_per_frame as _,
