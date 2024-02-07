@@ -206,7 +206,6 @@ impl Filter for FullVtsFilter {
             let mut mut_stuff = self.mut_stuff.lock().unwrap();
             {
                 if mut_stuff.frame_cache.contains_key(&n) {
-                    //eprintln!("getting from cached {}",n);
                     return Ok(mut_stuff.frame_cache.remove(&n));
                 }
             }
@@ -217,6 +216,7 @@ impl Filter for FullVtsFilter {
             let info = mpeg2_info(mpeg2dec);
 
             let target_vobu = self.vobu_lookup[n as usize];
+
             //TODO: LAST VOBU WITH VIDEO
             let last_vobu = self.vobus.len() - 1 == target_vobu as usize;
 

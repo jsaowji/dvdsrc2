@@ -174,7 +174,10 @@ fn do_index(dvd: *mut dvd_reader_s, vts: i32) -> Result<IndexedVts, std::io::Err
                             .map(|e| e.temporal_reference)
                             .max();
                         a.temporal_reference = maxi.unwrap() + 1;
-                        eprintln!("FOUND BAD TEMPORAL REFERENCE TRYING TO FIX\nWILL ONLY WORK IF ITS THE ONE CASE I SAW");
+
+                        eprintln!(
+                            "WARNING: Found a bad temporal reference trying to make it still work"
+                        );
                     }
                 }
                 let mut sort_frames = g.frames.clone();
@@ -203,11 +206,10 @@ fn do_index(dvd: *mut dvd_reader_s, vts: i32) -> Result<IndexedVts, std::io::Err
 
     loop {
         let crnt = b.seek(SeekFrom::Current(0))?;
-        //eprintln!("{:.02} \r",100.0 * crnt as f32 / maxsize as f32);
+
         if crnt == maxsize {
             break;
         }
-        //dbg!(b.seek(SeekFrom::Current(0))?,maxsize);
 
         assert_eq!(start_code(&mut b)?, 0xBA);
         b.read_exact(&mut scratch[0..10])?;
@@ -219,9 +221,6 @@ fn do_index(dvd: *mut dvd_reader_s, vts: i32) -> Result<IndexedVts, std::io::Err
         loop {
             let nxt = start_code(&mut b)?;
             let sz = b.read_u16::<BE>()? as usize;
-            //if crnt >= (6.5 * 1024.0 * 1024.0 * 1024.0) as _{
-            //    println!("{}   {:X}",crnt,nxt);
-            //}
 
             match nxt {
                 0xBF => {
@@ -371,7 +370,7 @@ struct Gopaliser {}
 
 impl Gopaliser {
     pub fn doit(video_data: &[u8]) -> Result<(Vec<Gop>, bool), std::io::Error> {
-        let mut b = Cursor::new(video_data.clone());
+        let mut b = Cursor::new(video_data);
 
         let mut has_seq_end = false;
 
@@ -389,11 +388,11 @@ impl Gopaliser {
             }
             ii += 1;
             if ii > 10 {
-                panic!("something went wrong");
+                panic!("ERROR: Something went wrong; GOP does not start as expected");
             }
         }
         if ii != 0 {
-            eprintln!("Please open issue i am looking for more samples of this phenomen");
+            eprintln!("WARNING: Had to use a workaround to find video start");
         }
 
         loop {
@@ -473,12 +472,12 @@ impl Gopaliser {
                     }
                     0xB7 => {
                         has_seq_end = true;
-                        eprintln!("seq end");
+                        eprintln!("INFO: Found a SEQUENCE_END");
                     }
                     e => {
                         if e >= 0x01 && e <= 0xAF {
                         } else {
-                            eprintln!("{:X}", e);
+                            eprintln!("WARNING: Found unexpected start code: {:X}", e);
                         }
                     }
                 }

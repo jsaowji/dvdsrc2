@@ -197,7 +197,10 @@ pub fn raw_audio_frames_init(
         let is_last = v.0 == last_i;
         let aua = v.1.v.streams.iter().find(|e| e.id == real_stream_idx);
         if aua.is_none() {
-            eprintln!("VOBU without audio: {}", v.1.i);
+            eprintln!(
+                "WARNING: Found a VOBU without audio: {}",
+                v.1.i
+            );
             continue;
         }
         let aua = aua.unwrap();
