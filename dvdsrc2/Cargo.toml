@@ -11,9 +11,9 @@ crate-type = ["cdylib"]
 #vapoursynth4-sys = {version = "0.2.0"}
 #vapoursynth4-rs = { path = "../../vapoursynth4-rs/vapoursynth4-rs" }
 #vapoursynth4-sys = { path = "../../vapoursynth4-rs/vapoursynth4-sys" }
-vapoursynth4-rs = {git = "https://github.com/jsaowji/vapoursynth4-rs",rev = "c01cf9cc88745199c75cbc73d8a956ef0223331d"}
-vapoursynth4-sys = {git = "https://github.com/jsaowji/vapoursynth4-rs",rev = "c01cf9cc88745199c75cbc73d8a956ef0223331d" }
-#vapoursynth4-rs = {git = "https://github.com/inflation/vapoursynth4-rs",rev = "cd0c1892d8fdd23f349126b524bced5b6fcd8bfa"}
-#vapoursynth4-sys = {git = "https://github.com/inflation/vapoursynth4-rs",rev = "cd0c1892d8fdd23f349126b524bced5b6fcd8bfa" }
+#vapoursynth4-rs = {git = "https://github.com/jsaowji/vapoursynth4-rs",rev = "c01cf9cc88745199c75cbc73d8a956ef0223331d"}
+#vapoursynth4-sys = {git = "https://github.com/jsaowji/vapoursynth4-rs",rev = "c01cf9cc88745199c75cbc73d8a956ef0223331d" }
+vapoursynth4-rs = {git = "https://github.com/inflation/vapoursynth4-rs",rev = "7c1b3b8cd3c3b7b4c7d09e174cd43fb853128ec8"}
+vapoursynth4-sys = {git = "https://github.com/inflation/vapoursynth4-rs",rev = "7c1b3b8cd3c3b7b4c7d09e174cd43fb853128ec8" }
 const-str = "0.5.6"
 dvdsrccommon = { path = "../dvdsrccommon" }

@@ -24,7 +24,7 @@ impl<A: Read + Seek> CacheSeekReader<A> {
 impl<A: Read + Seek> Read for CacheSeekReader<A> {
     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
         if self.current_pos >= self.buffer_pos
-            && self.current_pos < self.buffer_pos + self.buffer.len() as u64
+            && self.current_pos < self.buffer_pos + self.buffer_len as u64
         {
             //read sth from buffer
             let buffer_offset = self.current_pos - self.buffer_pos;
@@ -45,7 +45,11 @@ impl<A: Read + Seek> Read for CacheSeekReader<A> {
         self.buffer_len = self.inner.read(&mut self.buffer[0..]).unwrap();
 
         self.buffer_pos = self.current_pos;
-        return self.read(buf);
+        if self.buffer_len != 0 {
+            return self.read(buf);
+        } else {
+            return Ok(0);
+        }
     }
 }
 
