@@ -42,6 +42,7 @@ pub struct Vobu {
     pub gops: Vec<Gop>,
     pub vobcell: VobCell,
     pub first_ptm: u32,
+    pub last_ptm: u32,
     pub streams: Vec<Stream>,
     pub mpeg2_video_size: u32,
     pub mpeg2_has_seq_end: bool,

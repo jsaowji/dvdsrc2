@@ -101,12 +101,28 @@ pub fn raw_audio_frames_init(
         }
     }
 
-    let vobu0strems = vobus[0]
-        .v
-        .streams
-        .iter()
-        .find(|e| e.id == real_stream_idx)
-        .unwrap();
+    //TODO: rename this to sth like first vobu with acual data
+    let mut vobu0_idx = 0;
+    let mut vobu0strems = vobus[0].v.streams.iter().find(|e| e.id == real_stream_idx);
+    let mut elapsed = 0;
+    //TODO: this is wrong probably
+
+    if vobu0strems.is_none() {
+        eprintln!("Didn't find requested audio in first VOBU ({}), checking next vobus; Output will probably be wrong",vobus.len());
+        elapsed += vobus[0].v.last_ptm - vobus[0].v.first_ptm;
+
+        for a in 1..vobus.len() {
+            vobu0_idx = a;
+            vobu0strems = vobus[a].v.streams.iter().find(|e| e.id == real_stream_idx);
+            if vobu0strems.is_some() {
+                eprintln!("Found audio in vobu {}", a);
+                break;
+            }
+            elapsed += vobus[0].v.last_ptm - vobus[0].v.first_ptm;
+        }
+        assert!(vobu0strems.is_some());
+    }
+    let vobu0strems = vobu0strems.unwrap();
 
     let mut stream_buffer = Vec::with_capacity(vobu0strems.packets.total_bytes as _);
 
@@ -179,10 +195,10 @@ pub fn raw_audio_frames_init(
             let frame_start = a.pts + frame_length * (j);
             let frame_end = a.pts + frame_length * (j + 1);
 
-            if frame_end >= vobus[0].v.first_ptm {
+            if frame_end >= vobus[vobu0_idx].v.first_ptm {
                 //TODO: this can be improved
                 //if is_ac3 {
-                start_offset_pts = vobus[0].v.first_ptm as i32 - frame_start as i32;
+                start_offset_pts = vobus[vobu0_idx].v.first_ptm as i32 - frame_start as i32 + elapsed as i32;
                 start_byte_offset =
                     a.offset + j * packet_lenght as u32 - if is_lpcm { 3 } else { 0 };
                 //} else if is_lpcm{
@@ -204,7 +220,7 @@ pub fn raw_audio_frames_init(
         let is_last = v.0 == last_i;
         let aua = v.1.v.streams.iter().find(|e| e.id == real_stream_idx);
         if aua.is_none() {
-            eprintln!("WARNING: Found a VOBU without audio: {}", v.1.i);
+            eprintln!("WARNING: Found a VOBU without audio: {}  ({} / {})", v.1.i, v.0, last_i);
             continue;
         }
         let aua = aua.unwrap();

@@ -253,6 +253,7 @@ fn do_index(dvd: *mut dvd_reader_s, vts: i32) -> Result<IndexedVts, std::io::Err
                             v.seek(SeekFrom::Start(1 + 0xC)).unwrap();
 
                             current_vobu.first_ptm = v.read_u32::<BE>().unwrap();
+                            current_vobu.last_ptm = v.read_u32::<BE>().unwrap();
                             //current_vobu.first_ptm = pci.pci_gi.vobu_s_ptm;
                             current_vobu.sector_start = (crnt / 2048) as u32;
                         }

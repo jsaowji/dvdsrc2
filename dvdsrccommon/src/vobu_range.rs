@@ -2,6 +2,7 @@ use crate::index::{IndexedVts, Vobu};
 
 pub type VobuRange = (u32, u32);
 
+#[derive(Debug)]
 pub struct EVobu {
     pub i: usize,
     pub v: Vobu,
