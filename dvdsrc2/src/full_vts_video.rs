@@ -586,30 +586,42 @@ fn tag_frame2(mut props: MapMut<'_>, tff: bool, prog: bool, ft: FrameType) {
 
 fn tag_frame1(mut props: MapMut<'_>, seq: mpeg2_sequence_t) {
     let primaries = match seq.colour_primaries {
+        //0 Forbidden
         1 => VSColorPrimaries::VSC_PRIMARIES_BT709,
+        //2 => Unspecified Video
+        //3 => Reserved
         4 => VSColorPrimaries::VSC_PRIMARIES_BT470_M,
         5 => VSColorPrimaries::VSC_PRIMARIES_BT470_BG,
         6 => VSColorPrimaries::VSC_PRIMARIES_ST170_M,
         7 => VSColorPrimaries::VSC_PRIMARIES_ST240_M,
+        // 8-255 Reserved
         _ => VSColorPrimaries::VSC_PRIMARIES_UNSPECIFIED,
     };
 
     let transfer = match seq.transfer_characteristics {
+        //0 Forbidden
         1 => VSTransferCharacteristics::VSC_TRANSFER_BT709,
+        //2 => Unspecified Video
+        //3 => Reserved
         4 => VSTransferCharacteristics::VSC_TRANSFER_BT470_M,
         5 => VSTransferCharacteristics::VSC_TRANSFER_BT470_BG,
         6 => VSTransferCharacteristics::VSC_TRANSFER_BT601, // SMPTE 170M
         7 => VSTransferCharacteristics::VSC_TRANSFER_ST240_M,
         8 => VSTransferCharacteristics::VSC_TRANSFER_LINEAR,
+        //9-255 Reserved
         _ => VSTransferCharacteristics::VSC_TRANSFER_UNSPECIFIED,
     };
 
     let matrix = match seq.matrix_coefficients {
+        //0 Forbidden
         1 => VSMatrixCoefficients::VSC_MATRIX_BT709,
+        //2 => Unspecified Video
+        //3 => Reserved
         4 => VSMatrixCoefficients::VSC_MATRIX_FCC,
         5 => VSMatrixCoefficients::VSC_MATRIX_BT470_BG,
         6 => VSMatrixCoefficients::VSC_MATRIX_ST170_M,
         7 => VSMatrixCoefficients::VSC_MATRIX_ST240_M,
+        //8-255 Reserved
         _ => VSMatrixCoefficients::VSC_MATRIX_UNSPECIFIED,
     };
     props

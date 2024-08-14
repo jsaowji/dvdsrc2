@@ -5,28 +5,27 @@ use std::{
 };
 
 use const_str::cstr;
-use dvdsrccommon::audio_demuxing::{raw_audio_frames_init, AudioFramesInfo};
 use vapoursynth4_rs::{
     core::CoreRef,
-    frame::{Frame, FrameContext, VideoFrame},
-    key,
+    frame::{FrameContext, VideoFrame},
     map::{MapMut, MapRef},
     node::{ActivationReason, Dependencies, Filter, FilterMode},
     VideoInfo,
 };
 
-use crate::{add_audio_props, open_dvd_vobus};
+use crate::{open_dvd_vobus, OpenDvdVobus};
 
 struct FullFilterMutStuff {
-    ac3info: AudioFramesInfo,
+    dvdvvobus: OpenDvdVobus,
+    seek_lookup_tbl: Vec<u64>,
 }
 
-pub struct RawAc3Filter {
-    ai: VideoInfo,
+pub struct RawVobFilter {
+    vobs_vi: VideoInfo,
     mut_stuff: Arc<Mutex<FullFilterMutStuff>>,
 }
 
-impl Filter for RawAc3Filter {
+impl Filter for RawVobFilter {
     type Error = CString;
     type FrameType = VideoFrame;
     type FilterData = ();
@@ -38,18 +37,22 @@ impl Filter for RawAc3Filter {
         mut core: CoreRef,
     ) -> Result<(), Self::Error> {
         let open_dvd_vobus = open_dvd_vobus(input);
-        let reader = open_dvd_vobus.reader;
-        let audio = input
-            .get_int(key!("audio"), 0)
-            .expect("Failed to get audio");
 
-        let ac3info = raw_audio_frames_init(
-            reader,
-            open_dvd_vobus.indexed.clone(),
-            open_dvd_vobus.vobus,
-            audio as _,
-            false,
-        );
+        let total_sz = open_dvd_vobus.indexed.total_size_blocks;
+        let mut seek_lookup_tbl: Vec<u64> = Vec::with_capacity(total_sz as usize);
+
+        for v in &open_dvd_vobus.vobus {
+            let start = open_dvd_vobus.indexed.vobus[v.i].sector_start;
+            let end = if v.i == open_dvd_vobus.indexed.vobus.len() - 1 {
+                total_sz
+            } else {
+                open_dvd_vobus.indexed.vobus[v.i + 1].sector_start
+            };
+            let sz = end - start;
+            for a in 0..sz {
+                seek_lookup_tbl.push((start + a) as u64 * 2048);
+            }
+        }
 
         let vi = VideoInfo {
             format: vapoursynth4_rs::ffi::VSVideoFormat {
@@ -63,14 +66,18 @@ impl Filter for RawAc3Filter {
             },
             fps_num: 0,
             fps_den: 0,
-            width: ac3info.frame_length as _,
+            width: 2048,
             height: 1,
-            num_frames: ac3info.frame_cnt as _,
+            num_frames: seek_lookup_tbl.len() as _,
         };
 
-        let mutdata = FullFilterMutStuff { ac3info };
-        let filter = RawAc3Filter {
-            ai: vi.clone(),
+        let mutdata = FullFilterMutStuff {
+            dvdvvobus: open_dvd_vobus,
+            seek_lookup_tbl,
+        };
+
+        let filter = RawVobFilter {
+            vobs_vi: vi.clone(),
             mut_stuff: Arc::new(Mutex::new(mutdata)),
         };
 
@@ -78,7 +85,7 @@ impl Filter for RawAc3Filter {
 
         core.create_video_filter(
             output,
-            cstr!("RawAc3"),
+            cstr!("RawVob"),
             &vi,
             Box::new(filter),
             Dependencies::new(&deps).unwrap(),
@@ -96,29 +103,22 @@ impl Filter for RawAc3Filter {
         core: CoreRef,
     ) -> Result<Option<VideoFrame>, Self::Error> {
         unsafe {
-            let mut stuff = self.mut_stuff.lock().unwrap();
-
-            let fl = stuff.ac3info.frame_length;
-            let mut newframe = core.new_video_frame(&self.ai.format, fl as _, 1, None);
-
-            add_audio_props(n as _, newframe.properties_mut().unwrap(), &stuff.ac3info);
-
+            let fl = 2048;
+            let mut newframe = core.new_video_frame(&self.vobs_vi.format, fl as _, 1, None);
+            assert_eq!(newframe.stride(0), fl);
             let buffer = std::slice::from_raw_parts_mut(newframe.plane_mut(0), fl as _);
 
-            stuff
-                .ac3info
-                .reader
-                .seek(SeekFrom::Start((n as u64) * fl as u64))
-                .unwrap();
-            stuff.ac3info.reader.read_exact(&mut buffer[0..]).unwrap();
+            let mut stuff = self.mut_stuff.lock().unwrap();
+            let ind = stuff.seek_lookup_tbl[n as usize];
+            stuff.dvdvvobus.reader.seek(SeekFrom::Start(ind)).unwrap();
+            stuff.dvdvvobus.reader.read_exact(&mut buffer[0..]).unwrap();
 
-            // dbg!(&wps);
             return Ok(Some(newframe));
         }
     }
 
-    const NAME: &'static CStr = cstr!("RawAc3");
-    const ARGS: &'static CStr = cstr!("path:data;vts:int;audio:int;ranges:int[]:opt;");
+    const NAME: &'static CStr = cstr!("RawVob");
+    const ARGS: &'static CStr = cstr!("path:data;vts:int;ranges:int[]:opt;");
     const RETURN_TYPE: &'static CStr = cstr!("clip:vnode;");
     const FILTER_MODE: FilterMode = FilterMode::Unordered;
 }

@@ -3,6 +3,7 @@ mod full_vts_lpcm;
 mod full_vts_video;
 mod ifo_file;
 mod raw_ac3;
+mod raw_vob;
 
 use dvdsrccommon::{
     audio_demuxing::AudioFramesInfo,
@@ -17,6 +18,7 @@ use full_vts_lpcm::*;
 use full_vts_video::*;
 use ifo_file::*;
 use raw_ac3::*;
+use raw_vob::*;
 
 use const_str::cstr;
 use vapoursynth4_rs::{
@@ -36,6 +38,7 @@ declare_plugin!(
     (FullVtsFilterAc3, None),
     (FullVtsFilterLpcm, None),
     (RawAc3Filter, None),
+    (RawVobFilter, None),
     (IfoFile, None)
 );
 

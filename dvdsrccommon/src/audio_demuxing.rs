@@ -198,7 +198,8 @@ pub fn raw_audio_frames_init(
             if frame_end >= vobus[vobu0_idx].v.first_ptm {
                 //TODO: this can be improved
                 //if is_ac3 {
-                start_offset_pts = vobus[vobu0_idx].v.first_ptm as i32 - frame_start as i32 + elapsed as i32;
+                start_offset_pts =
+                    vobus[vobu0_idx].v.first_ptm as i32 - frame_start as i32 + elapsed as i32;
                 start_byte_offset =
                     a.offset + j * packet_lenght as u32 - if is_lpcm { 3 } else { 0 };
                 //} else if is_lpcm{
@@ -220,7 +221,10 @@ pub fn raw_audio_frames_init(
         let is_last = v.0 == last_i;
         let aua = v.1.v.streams.iter().find(|e| e.id == real_stream_idx);
         if aua.is_none() {
-            eprintln!("WARNING: Found a VOBU without audio: {}  ({} / {})", v.1.i, v.0, last_i);
+            eprintln!(
+                "WARNING: Found a VOBU without audio: {}  ({} / {})",
+                v.1.i, v.0, last_i
+            );
             continue;
         }
         let aua = aua.unwrap();
