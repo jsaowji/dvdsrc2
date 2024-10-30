@@ -1,4 +1,5 @@
 use std::{
+    error::Error,
     fs::File,
     io::{Cursor, Seek, SeekFrom},
     path::Path,
@@ -22,6 +23,24 @@ use crate::{
     mpegps::{pes, start_code, ReadToVec},
     open_dvd,
 };
+
+//https://gitlab.com/mbunkus/mkvtoolnix/-/commit/2b1b065840390878e662b53ece56d881f292eb98
+pub fn handle_scratch_read<A: Read + Seek>(
+    b: &mut A,
+    sz: usize,
+    scratch: &mut [u8],
+) -> Result<(), Box<dyn Error>> {
+    if (sz as usize) > (scratch.len()) {
+        let aaa = b.seek(SeekFrom::Current(0))?;
+        eprintln!("trying to workaround invalid dvd padding");
+        let sz = 2048 - (aaa % 2048);
+        let mut v = vec![0u8; sz as usize];
+        b.read_exact(&mut v[0..sz as usize])?;
+    } else {
+        b.read_exact(&mut scratch[0..sz as usize])?;
+    }
+    Ok(())
+}
 
 pub fn get_index_vts(a: &str, vts: u8) -> IndexedVts {
     let idm = IndexManager::new();
@@ -272,7 +291,7 @@ fn do_index(dvd: *mut dvd_reader_s, vts: i32) -> Result<IndexedVts, std::io::Err
                     }
                 }
                 0xBE | 0xBB => {
-                    b.read_exact(&mut scratch[0..sz as usize])?;
+                    handle_scratch_read(&mut b, sz, &mut scratch).unwrap();
                 }
                 0xBD => {
                     let pes = pes(&mut b, sz)?;

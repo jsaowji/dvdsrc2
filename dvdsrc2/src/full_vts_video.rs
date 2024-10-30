@@ -11,8 +11,8 @@ use const_str::cstr;
 use dvdsrccommon::{
     bindings::mpeg2::{mpeg2_accel, mpeg2_init, mpeg2_sequence_t, mpeg2_state_t, mpeg2dec_t},
     byteorder::{ReadBytesExt, BE},
-    dvdio::cache_seek_reader::CacheSeekReader,
-    dvdio::proper_dvd_reader::ProperDvdReader,
+    do_index_dvd::handle_scratch_read,
+    dvdio::{cache_seek_reader::CacheSeekReader, proper_dvd_reader::ProperDvdReader},
     index::{FrameType, Vobu},
     mpegps::start_code,
 };
@@ -517,7 +517,7 @@ fn demux_video(
 
             match nxt {
                 0xBF | 0xBD | 0xBE | 0xBB => {
-                    b.read_exact(&mut scratch[0..sz as usize])?;
+                    handle_scratch_read(&mut b, sz, &mut scratch).unwrap();
                 }
                 0xE0 => {
                     b.read_exact(&mut scratch[..sz as usize])?;
