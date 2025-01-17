@@ -192,11 +192,16 @@ fn do_index(dvd: *mut dvd_reader_s, vts: i32) -> Result<IndexedVts, std::io::Err
                             .filter(|e| e.temporal_reference != currenttr)
                             .map(|e| e.temporal_reference)
                             .max();
-                        a.temporal_reference = maxi.unwrap() + 1;
 
                         eprintln!(
                             "WARNING: Found a bad temporal reference trying to make it still work"
                         );
+                        if let Some(e) = maxi {
+                            a.temporal_reference = e + 1;
+                        } else {
+                            //GOP at the end was cut after one I frame and the I frame is the only thing left in that GOP
+                            a.temporal_reference = 0;
+                        }
                     }
                 }
                 let mut sort_frames = g.frames.clone();

@@ -6,7 +6,6 @@ cases.txt
 test*.py
 .vspreview
 .vsjet
-personaltest.py
 dvdsrccommon/json.hpp
 tmp/
 windows_libs/
