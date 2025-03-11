@@ -5,6 +5,7 @@ mod ifo_file;
 mod raw_ac3;
 mod raw_vob;
 
+use admap::*;
 use dvdsrccommon::{
     audio_demuxing::AudioFramesInfo,
     do_index_dvd::{get_index_vts, OpenDvdBlockReader},
@@ -19,6 +20,7 @@ use full_vts_video::*;
 use ifo_file::*;
 use raw_ac3::*;
 use raw_vob::*;
+mod admap;
 
 use const_str::cstr;
 use vapoursynth4_rs::{
@@ -39,7 +41,8 @@ declare_plugin!(
     (FullVtsFilterLpcm, None),
     (RawAc3Filter, None),
     (RawVobFilter, None),
-    (IfoFile, None)
+    (IfoFile, None),
+    (AdmapFilter, None)
 );
 
 pub fn parse_range<'a>(input: MapRef<'a>, indexv: &IndexedVts) -> Vec<VobuRange> {

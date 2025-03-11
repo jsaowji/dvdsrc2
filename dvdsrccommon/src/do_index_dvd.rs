@@ -274,23 +274,39 @@ fn do_index(dvd: *mut dvd_reader_s, vts: i32) -> Result<IndexedVts, std::io::Err
                             //let mut pci = std::mem::zeroed();
                             //dvdread::navRead_PCI(&mut pci, v.into_inner()[1..].as_mut_ptr());
                             //let data = v.into_inner()[1..];
-                            v.seek(SeekFrom::Start(1 + 0xC)).unwrap();
+                            v.seek(SeekFrom::Start(1)).unwrap();
+
+                            let nv_pck_lbn = v.read_u32::<BE>().unwrap();
+                            let _vobu_cat = v.read_u16::<BE>().unwrap();
+                            let _res = v.read_u16::<BE>().unwrap();
+                            let _vobu_uop_ctl = v.read_u32::<BE>().unwrap();
+
+                            assert_eq!(nv_pck_lbn as u64, crnt as u64 / 2048);
 
                             current_vobu.first_ptm = v.read_u32::<BE>().unwrap();
                             current_vobu.last_ptm = v.read_u32::<BE>().unwrap();
                             //current_vobu.first_ptm = pci.pci_gi.vobu_s_ptm;
                             current_vobu.sector_start = (crnt / 2048) as u32;
+                            //eprintln!("PCI {nv_pck_lbn}");
                         }
                         1 => {
                             //let mut dsi = std::mem::zeroed();
                             //dvdread::navRead_DSI(&mut dsi, v.into_inner()[1..].as_mut_ptr());
 
+                            v.seek(SeekFrom::Start(1 + 0x04)).unwrap();
+                            let nv_pck_lbn = v.read_u32::<BE>().unwrap();
+
+                            assert_eq!(nv_pck_lbn as u64, crnt as u64 / 2048);
+
                             v.seek(SeekFrom::Start(1 + 0x18)).unwrap();
-                            current_vobu.vobcell.vob = v.read_u16::<BE>().unwrap();
+                            let vob = v.read_u16::<BE>().unwrap();
                             _ = v.read_u8().unwrap();
-                            current_vobu.vobcell.cell = v.read_u8().unwrap();
+                            let cell = v.read_u8().unwrap();
+                            current_vobu.vobcell.vob = vob;
+                            current_vobu.vobcell.cell = cell;
                             //current_vobu.vobcell.vob = dsi.dsi_gi.vobu_vob_idn;
                             //current_vobu.vobcell.cell = dsi.dsi_gi.vobu_c_idn;
+                            //eprintln!("DSI {nv_pck_lbn} {vob} {cell}");
                         }
                         _ => unreachable!(),
                     }
@@ -369,20 +385,20 @@ fn do_index(dvd: *mut dvd_reader_s, vts: i32) -> Result<IndexedVts, std::io::Err
         &mut video_buffer,
         &mut frames_seen,
     );
-    //let ifo = ifoOpen(dvd, vts as _);
-    //let admap = *(*ifo).vts_vobu_admap;
-    //let vobu_cnt = (admap.last_byte + 1 - VOBU_ADMAP_SIZE) as isize / 4;
-    //assert_eq!(vobu_cnt as usize, vobus.len());
-    //for kk in 0..vobu_cnt {
-    //    let mm = *admap.vobu_start_sectors.offset(kk);
-    //    assert_eq!(vobus[kk as usize].sector_start, mm);
-    //}
-    //ifoClose(ifo);
-    for (i, kk) in parse_vobu_admap(&get_ifo_file(dvd, vts as _))
-        .into_iter()
-        .enumerate()
-    {
-        assert_eq!(vobus[i].sector_start, kk);
+
+    let admap = parse_vobu_admap(&get_ifo_file(dvd, vts as _));
+    let mut admap_failed = vobus.len() != admap.len();
+
+    if !admap_failed {
+        for (i, kk) in admap.into_iter().enumerate() {
+            if vobus[i].sector_start != kk {
+                admap_failed = true;
+            }
+        }
+    }
+
+    if admap_failed {
+        eprintln!("ADMAP mismath between what we saw in the stream vs what we got");
     }
 
     return Ok(IndexedVts {
