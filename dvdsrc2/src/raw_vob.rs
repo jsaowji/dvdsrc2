@@ -118,7 +118,7 @@ impl Filter for RawVobFilter {
     }
 
     const NAME: &'static CStr = cstr!("RawVob");
-    const ARGS: &'static CStr = cstr!("path:data;vts:int;ranges:int[]:opt;");
+    const ARGS: &'static CStr = cstr!("path:data;vts:int;ranges:int[]:opt;domain:int:opt");
     const RETURN_TYPE: &'static CStr = cstr!("clip:vnode;");
     const FILTER_MODE: FilterMode = FilterMode::Unordered;
 }

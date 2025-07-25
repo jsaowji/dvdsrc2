@@ -148,7 +148,8 @@ impl Filter for FullVtsFilterLpcm {
     }
 
     const NAME: &'static CStr = cstr!("FullVtsLpcm");
-    const ARGS: &'static CStr = cstr!("path:data;vts:int;audio:int;ranges:int[]:opt;");
+    const ARGS: &'static CStr =
+        cstr!("path:data;vts:int;audio:int;ranges:int[]:opt;domain:int:opt");
     const RETURN_TYPE: &'static CStr = cstr!("clip:anode;");
     const FILTER_MODE: FilterMode = FilterMode::Unordered;
 }

@@ -489,7 +489,7 @@ impl Filter for FullVtsFilter {
     }
 
     const NAME: &'static CStr = cstr!("FullVts");
-    const ARGS: &'static CStr = cstr!("path:data;vts:int;ranges:int[]:opt;");
+    const ARGS: &'static CStr = cstr!("path:data;vts:int;ranges:int[]:opt;domain:int:opt");
     const RETURN_TYPE: &'static CStr = cstr!("clip:vnode;");
     //const RETURN_TYPE: &'static CStr = cstr!("clip:vnode;info:vframe;");
     const FILTER_MODE: FilterMode = FilterMode::Unordered;

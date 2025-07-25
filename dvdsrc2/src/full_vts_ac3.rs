@@ -245,7 +245,8 @@ impl Filter for FullVtsFilterAc3 {
     }
 
     const NAME: &'static CStr = cstr!("FullVtsAc3");
-    const ARGS: &'static CStr = cstr!("path:data;vts:int;audio:int;ranges:int[]:opt;");
+    const ARGS: &'static CStr =
+        cstr!("path:data;vts:int;audio:int;ranges:int[]:opt;domain:int:opt");
     const RETURN_TYPE: &'static CStr = cstr!("clip:anode;");
     const FILTER_MODE: FilterMode = FilterMode::Unordered;
 }

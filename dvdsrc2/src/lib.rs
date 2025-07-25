@@ -8,7 +8,7 @@ mod raw_vob;
 use admap::*;
 use dvdsrccommon::{
     audio_demuxing::AudioFramesInfo,
-    do_index_dvd::{get_index_vts, OpenDvdBlockReader},
+    do_index_dvd::{get_index_vts, DvdBlockReaderDomain, OpenDvdBlockReader},
     dvdio::{cache_seek_reader::CacheSeekReader, proper_dvd_reader::ProperDvdReader},
     index::IndexedVts,
     open_dvd,
@@ -82,7 +82,16 @@ fn open_dvd_vobus(input: MapRef<'_>) -> OpenDvdVobus {
         .expect("Failed to get dvdpath");
     let vts = input.get_int(key!("vts"), 0).expect("Failed to get vts");
 
-    let indexv = get_index_vts(dvdpath, vts as _);
+    let domain = match if let Ok(e) = input.get_int(key!("domain"), 0) {
+        e
+    } else {
+        1
+    } {
+        0 => DvdBlockReaderDomain::Menu,
+        1 => DvdBlockReaderDomain::Title,
+        _ => panic!("invalid domain"),
+    };
+    let indexv = get_index_vts(dvdpath, vts as _, domain);
 
     let ranges = parse_range(input, &indexv);
 
@@ -90,7 +99,7 @@ fn open_dvd_vobus(input: MapRef<'_>) -> OpenDvdVobus {
 
     let dvd = open_dvd(dvdpath.try_into().unwrap()).unwrap();
 
-    let reader = OpenDvdBlockReader::new(dvd, vts as _).reader;
+    let reader = OpenDvdBlockReader::new(dvd, vts as _, domain).reader;
 
     OpenDvdVobus {
         indexed: indexv,

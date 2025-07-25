@@ -118,7 +118,8 @@ impl Filter for RawAc3Filter {
     }
 
     const NAME: &'static CStr = cstr!("RawAc3");
-    const ARGS: &'static CStr = cstr!("path:data;vts:int;audio:int;ranges:int[]:opt;");
+    const ARGS: &'static CStr =
+        cstr!("path:data;vts:int;audio:int;ranges:int[]:opt;domain:int:opt");
     const RETURN_TYPE: &'static CStr = cstr!("clip:vnode;");
     const FILTER_MODE: FilterMode = FilterMode::Unordered;
 }

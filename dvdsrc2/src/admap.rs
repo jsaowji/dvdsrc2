@@ -1,7 +1,7 @@
 use std::ffi::{c_void, CStr, CString};
 
 use const_str::cstr;
-use dvdsrccommon::do_index_dvd::get_index_vts;
+use dvdsrccommon::do_index_dvd::{get_index_vts, DvdBlockReaderDomain};
 use vapoursynth4_rs::{
     core::CoreRef,
     frame::{FrameContext, VideoFrame},
@@ -27,7 +27,7 @@ impl Filter for AdmapFilter {
             .get_utf8(key!("path"), 0)
             .expect("Failed to get dvdpath");
         let vts = input.get_int(key!("vts"), 0).expect("Failed to get vts");
-        let indexv = get_index_vts(dvdpath, vts as _);
+        let indexv = get_index_vts(dvdpath, vts as _, DvdBlockReaderDomain::Title);
         let vava: Vec<i64> = indexv.vobus.iter().map(|e| e.sector_start as i64).collect();
         output.set_int_array(key!("admap"), &vava).unwrap();
         Ok(())

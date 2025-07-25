@@ -42,11 +42,11 @@ pub fn handle_scratch_read<A: Read + Seek>(
     Ok(())
 }
 
-pub fn get_index_vts(a: &str, vts: u8) -> IndexedVts {
+pub fn get_index_vts(a: &str, vts: u8, domain: DvdBlockReaderDomain) -> IndexedVts {
     let idm = IndexManager::new();
     let dd = idm.get_dir(a);
-    //let fz = dd.join(format!("{vts}.json"));
-    let fz = dd.join(format!("{vts}.bin"));
+    let postfix = domain.save_file_postfix();
+    let fz = dd.join(format!("{vts}{postfix}.bin"));
 
     if fz.exists() {
         if let Ok(e) = bincode::decode_from_std_read(
@@ -64,11 +64,15 @@ pub fn get_index_vts(a: &str, vts: u8) -> IndexedVts {
         //     return e;
         // }
     }
-    do_index_vts(a, vts as _).unwrap();
-    return get_index_vts(a, vts);
+    do_index_vts(a, vts as _, domain).unwrap();
+    return get_index_vts(a, vts, domain);
 }
 
-pub fn do_index_vts<P: AsRef<Path>>(stra: P, i: i32) -> Result<(), Box<dyn std::error::Error>> {
+pub fn do_index_vts<P: AsRef<Path>>(
+    stra: P,
+    i: i32,
+    domain: DvdBlockReaderDomain,
+) -> Result<(), Box<dyn std::error::Error>> {
     let dvd = open_dvd(stra.as_ref().to_str().unwrap()).unwrap();
 
     let idm = IndexManager::new();
@@ -76,64 +80,66 @@ pub fn do_index_vts<P: AsRef<Path>>(stra: P, i: i32) -> Result<(), Box<dyn std::
     let dir = idm.get_dir(stra);
     std::fs::create_dir_all(&dir).unwrap();
 
-    let value = do_index(dvd, i).unwrap();
+    let value = do_index(dvd, i, domain).unwrap();
 
     let cnts = bincode::encode_to_vec(&value, bincode::config::standard()).unwrap();
-    if std::env::var("DVD_DEBUG").is_ok() {
-        serde_json::to_writer(File::create(dir.join(format!("{i}.json"))).unwrap(), &value)
-            .unwrap();
-    }
+    let postfix = domain.save_file_postfix();
 
-    std::fs::write(dir.join(format!("{i}.bin")), cnts).unwrap();
+    if std::env::var("DVD_DEBUG").is_ok() {
+        serde_json::to_writer(
+            File::create(dir.join(format!("{i}{postfix}.json"))).unwrap(),
+            &value,
+        )
+        .unwrap();
+    }
+    std::fs::write(dir.join(format!("{i}{postfix}.bin")), cnts).unwrap();
     unsafe {
         DVDClose(dvd);
     }
 
     Ok(())
 }
-/*
-pub fn do_index_all<P: AsRef<Path>>(stra: P) -> Result<u8, Box<dyn std::error::Error>> {
-    unsafe {
-        let dvd = open_dvd(stra.as_ref().to_str().unwrap()).unwrap();
 
-        let ifo0 = ifoOpen(dvd, 0);
-        assert!(!ifo0.is_null());
-
-        let idm = IndexManager::new();
-
-        let dir = idm.get_dir(stra);
-        std::fs::create_dir_all(&dir).unwrap();
-
-        for i in 1..(*(*ifo0).vts_atrt).nr_of_vtss as i32 + 1 {
-            eprintln!("vts {}", i);
-            let value = do_index(dvd, i).unwrap();
-
-            //let jesen = File::create(dir.join(format!("{}.json", i)))?;
-            //let jesen = BufWriter::with_capacity(1024 * 1024 * 10, jesen);
-
-            //serde_json::to_writer(jesen, &value).unwrap();
-            //let cnts = bson::to_vec(&value)?;
-            let cnts = bincode::encode_to_vec(&value, bincode::config::standard()).unwrap();
-
-            std::fs::write(dir.join(format!("{i}.bin")), cnts).unwrap();
-        }
-
-        let vtss = (*(*ifo0).vts_atrt).nr_of_vtss as u8;
-        ifoClose(ifo0);
-        //DVDCLOSE
-        Ok(vtss)
-    }
-}
-*/
 pub struct OpenDvdBlockReader {
     pub reader: CacheSeekReader<ProperDvdReader>,
     pub maxsize: u64,
 }
 
+#[derive(Debug, Copy, Clone)]
+pub enum DvdBlockReaderDomain {
+    Menu,
+    Title,
+}
+impl DvdBlockReaderDomain {
+    pub fn save_file_postfix(&self) -> &'static str {
+        match self {
+            DvdBlockReaderDomain::Menu => "_menu",
+            DvdBlockReaderDomain::Title => "",
+        }
+    }
+    pub fn is_menu(&self) -> bool {
+        match self {
+            DvdBlockReaderDomain::Menu => true,
+            DvdBlockReaderDomain::Title => false,
+        }
+    }
+}
+
 impl OpenDvdBlockReader {
-    pub fn new(dvd: *mut dvd_reader_s, vts: i32) -> OpenDvdBlockReader {
+    pub fn new(
+        dvd: *mut dvd_reader_s,
+        vts: i32,
+        domain: DvdBlockReaderDomain,
+    ) -> OpenDvdBlockReader {
         unsafe {
-            let file = DVDOpenFile(dvd, vts, dvd_read_domain_t_DVD_READ_TITLE_VOBS);
+            let file = DVDOpenFile(
+                dvd,
+                vts,
+                match domain {
+                    DvdBlockReaderDomain::Menu => dvd_read_domain_t_DVD_READ_MENU_VOBS,
+                    DvdBlockReaderDomain::Title => dvd_read_domain_t_DVD_READ_TITLE_VOBS,
+                },
+            );
             assert!(!file.is_null());
 
             // let ifo = ifoOpen(dvd, vts);
@@ -150,8 +156,12 @@ impl OpenDvdBlockReader {
     }
 }
 
-fn do_index(dvd: *mut dvd_reader_s, vts: i32) -> Result<IndexedVts, std::io::Error> {
-    let r = OpenDvdBlockReader::new(dvd, vts);
+fn do_index(
+    dvd: *mut dvd_reader_s,
+    vts: i32,
+    domain: DvdBlockReaderDomain,
+) -> Result<IndexedVts, std::io::Error> {
+    let r = OpenDvdBlockReader::new(dvd, vts, domain);
 
     let maxsize = r.maxsize;
     let mut b = r.reader;
@@ -386,19 +396,21 @@ fn do_index(dvd: *mut dvd_reader_s, vts: i32) -> Result<IndexedVts, std::io::Err
         &mut frames_seen,
     );
 
-    let admap = parse_vobu_admap(&get_ifo_file(dvd, vts as _));
-    let mut admap_failed = vobus.len() != admap.len();
+    if !domain.is_menu() {
+        let admap = parse_vobu_admap(&get_ifo_file(dvd, vts as _));
+        let mut admap_failed = vobus.len() != admap.len();
 
-    if !admap_failed {
-        for (i, kk) in admap.into_iter().enumerate() {
-            if vobus[i].sector_start != kk {
-                admap_failed = true;
+        if !admap_failed {
+            for (i, kk) in admap.into_iter().enumerate() {
+                if vobus[i].sector_start != kk {
+                    admap_failed = true;
+                }
             }
         }
-    }
 
-    if admap_failed {
-        eprintln!("ADMAP mismath between what we saw in the stream vs what we got");
+        if admap_failed {
+            eprintln!("ADMAP mismath between what we saw in the stream vs what we got");
+        }
     }
 
     return Ok(IndexedVts {

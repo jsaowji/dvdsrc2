@@ -37,6 +37,8 @@ pub struct Pes {
     pub pts: Option<u32>,
     pub dts: Option<u32>,
     pub inner: Cursor<Vec<u8>>,
+
+    pub has_pes_crc: bool,
 }
 pub fn pes(mut rdd: impl Read, sz: usize) -> Result<Pes, std::io::Error> {
     let a = rdd.read_u8()?;
@@ -54,6 +56,7 @@ pub fn pes(mut rdd: impl Read, sz: usize) -> Result<Pes, std::io::Error> {
     let buf = &buf[0..c as usize];
 
     let pts_dts_ind = (b & 0b11000000) >> 6;
+    let has_pes_crc = (b & 0b00000010) != 0;
 
     let mut pts = None;
     let mut dts = None;
@@ -78,6 +81,7 @@ pub fn pes(mut rdd: impl Read, sz: usize) -> Result<Pes, std::io::Error> {
         dts,
         pts,
         inner: rdd.read_to_cursor(sz - 3 - c as usize)?,
+        has_pes_crc: has_pes_crc,
     })
 }
 
