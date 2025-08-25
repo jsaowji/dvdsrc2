@@ -10,7 +10,7 @@ use vapoursynth4_rs::{
     core::CoreRef,
     frame::{AudioFrame, Frame, FrameContext},
     key,
-    map::{MapMut, MapRef},
+    map::MapRef,
     node::{ActivationReason, Dependencies, Filter, FilterMode},
     AudioInfo,
 };
@@ -34,14 +34,14 @@ impl Filter for FullVtsFilterLpcm {
 
     fn create(
         input: MapRef<'_>,
-        output: MapMut<'_>,
+        output: MapRef<'_>,
         _data: Option<Box<Self::FilterData>>,
         mut core: CoreRef,
     ) -> Result<(), Self::Error> {
-        let open_dvd_vobus = open_dvd_vobus(input);
+        let open_dvd_vobus = open_dvd_vobus(input)?;
         let reader = open_dvd_vobus.reader;
         let audio = input
-            .get_int(key!("audio"), 0)
+            .get_int(key!(c"audio"), 0)
             .expect("Failed to get audio");
 
         let lpcminfo = raw_audio_frames_init(
@@ -78,6 +78,8 @@ impl Filter for FullVtsFilterLpcm {
         };
 
         let deps = [];
+        let mut output = output;
+        let output = &mut output;
 
         core.create_audio_filter(
             output,

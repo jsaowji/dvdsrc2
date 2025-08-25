@@ -6,7 +6,7 @@ use vapoursynth4_rs::{
     core::CoreRef,
     frame::{FrameContext, VideoFrame},
     key,
-    map::{MapMut, MapRef},
+    map::MapRef,
     node::{ActivationReason, Filter, FilterMode},
 };
 
@@ -19,17 +19,17 @@ impl Filter for AdmapFilter {
 
     fn create(
         input: MapRef<'_>,
-        mut output: MapMut<'_>,
+        mut output: MapRef<'_>,
         _data: Option<Box<Self::FilterData>>,
         _core: CoreRef,
     ) -> Result<(), Self::Error> {
         let dvdpath = input
-            .get_utf8(key!("path"), 0)
+            .get_utf8(key!(c"path"), 0)
             .expect("Failed to get dvdpath");
-        let vts = input.get_int(key!("vts"), 0).expect("Failed to get vts");
+        let vts = input.get_int(key!(c"vts"), 0).expect("Failed to get vts");
         let indexv = get_index_vts(dvdpath, vts as _, DvdBlockReaderDomain::Title);
         let vava: Vec<i64> = indexv.vobus.iter().map(|e| e.sector_start as i64).collect();
-        output.set_int_array(key!("admap"), &vava).unwrap();
+        output.set_int_array(key!(c"admap"), &vava).unwrap();
         Ok(())
     }
 

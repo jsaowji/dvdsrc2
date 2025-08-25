@@ -8,7 +8,7 @@ use const_str::cstr;
 use vapoursynth4_rs::{
     core::CoreRef,
     frame::{FrameContext, VideoFrame},
-    map::{MapMut, MapRef},
+    map::MapRef,
     node::{ActivationReason, Dependencies, Filter, FilterMode},
     VideoInfo,
 };
@@ -32,11 +32,11 @@ impl Filter for RawVobFilter {
 
     fn create(
         input: MapRef<'_>,
-        output: MapMut<'_>,
+        output: MapRef<'_>,
         _data: Option<Box<Self::FilterData>>,
         mut core: CoreRef,
     ) -> Result<(), Self::Error> {
-        let open_dvd_vobus = open_dvd_vobus(input);
+        let open_dvd_vobus = open_dvd_vobus(input)?;
 
         let total_sz = open_dvd_vobus.indexed.total_size_blocks;
         let mut seek_lookup_tbl: Vec<u64> = Vec::with_capacity(total_sz as usize);

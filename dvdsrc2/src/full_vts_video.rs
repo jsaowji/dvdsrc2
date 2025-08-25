@@ -20,7 +20,7 @@ use vapoursynth4_rs::{
     core::CoreRef,
     frame::{Frame, FrameContext, VideoFrame},
     key,
-    map::{MapMut, MapRef, Value},
+    map::{MapRef, Value},
     node::{ActivationReason, Dependencies, Filter, FilterMode},
     VideoInfo,
 };
@@ -74,12 +74,12 @@ impl Filter for FullVtsFilter {
     fn create(
         input: MapRef<'_>,
         //mut output: MapMut<'_>,
-        output: MapMut<'_>,
+        output: MapRef<'_>,
         _data: Option<Box<Self::FilterData>>,
         mut core: CoreRef,
     ) -> Result<(), Self::Error> {
         unsafe {
-            let open_dvd_vobus = open_dvd_vobus(input);
+            let open_dvd_vobus = open_dvd_vobus(input)?;
             let reader = open_dvd_vobus.reader;
             let vobus = open_dvd_vobus.vobus;
 
@@ -176,7 +176,7 @@ impl Filter for FullVtsFilter {
 
             let deps = [];
             //output.set(
-            //    key!("info"),
+            //    key!(c"info"),
             //    vapoursynth4_rs::map::Value::VideoFrame(filter.info_frame.clone()),
             //    VSMapAppendMode::Replace,
             //)
@@ -371,7 +371,7 @@ impl Filter for FullVtsFilter {
                         {
                             let mut mm = newframe.properties_mut().unwrap();
                             mm.set(
-                                key!("InfoFrame"),
+                                key!(c"InfoFrame"),
                                 vapoursynth4_rs::map::Value::VideoFrame(self.info_frame.clone()),
                                 VSMapAppendMode::Replace,
                             )
@@ -554,10 +554,10 @@ fn fille_frame_black(newframe: &mut VideoFrame) {
     }
 }
 
-fn tag_frame2(mut props: MapMut<'_>, tff: bool, prog: bool, ft: FrameType) {
+fn tag_frame2(mut props: MapRef<'_>, tff: bool, prog: bool, ft: FrameType) {
     props
         .set(
-            key!("_FieldBased"),
+            key!(c"_FieldBased"),
             Value::Int(if !prog {
                 if tff {
                     VSFieldBased::VSC_FIELD_TOP
@@ -573,7 +573,7 @@ fn tag_frame2(mut props: MapMut<'_>, tff: bool, prog: bool, ft: FrameType) {
 
     props
         .set(
-            key!("_PictType"),
+            key!(c"_PictType"),
             Value::Utf8(match ft {
                 FrameType::I => "I",
                 FrameType::P => "P",
@@ -584,7 +584,7 @@ fn tag_frame2(mut props: MapMut<'_>, tff: bool, prog: bool, ft: FrameType) {
         .unwrap();
 }
 
-fn tag_frame1(mut props: MapMut<'_>, seq: mpeg2_sequence_t) {
+fn tag_frame1(mut props: MapRef<'_>, seq: mpeg2_sequence_t) {
     let primaries = match seq.colour_primaries {
         //0 Forbidden
         1 => VSColorPrimaries::VSC_PRIMARIES_BT709,
@@ -626,28 +626,28 @@ fn tag_frame1(mut props: MapMut<'_>, seq: mpeg2_sequence_t) {
     };
     props
         .set(
-            key!("_Matrix"),
+            key!(c"_Matrix"),
             Value::Int(matrix as _),
             VSMapAppendMode::Replace,
         )
         .unwrap();
     props
         .set(
-            key!("_Transfer"),
+            key!(c"_Transfer"),
             Value::Int(transfer as _),
             VSMapAppendMode::Replace,
         )
         .unwrap();
     props
         .set(
-            key!("_Primaries"),
+            key!(c"_Primaries"),
             Value::Int(primaries as _),
             VSMapAppendMode::Replace,
         )
         .unwrap();
     props
         .set(
-            key!("_ChromaLocation"),
+            key!(c"_ChromaLocation"),
             Value::Int(VSChromaLocation::VSC_CHROMA_LEFT as _),
             VSMapAppendMode::Replace,
         )
@@ -668,14 +668,14 @@ fn tag_frame1(mut props: MapMut<'_>, seq: mpeg2_sequence_t) {
 
         props
             .set(
-                key!("_SARNum"),
+                key!(c"_SARNum"),
                 Value::Int(pw as _),
                 VSMapAppendMode::Replace,
             )
             .unwrap();
         props
             .set(
-                key!("_SARDen"),
+                key!(c"_SARDen"),
                 Value::Int(ph as _),
                 VSMapAppendMode::Replace,
             )

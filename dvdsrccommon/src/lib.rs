@@ -35,13 +35,13 @@ pub const LOGGER_CB: DvdLoggerCb2 = DvdLoggerCb2 {
     pf_log: Some(null_logfn as _),
 };
 
-pub fn open_dvd(stra: &str) -> Option<*mut dvd_reader_t> {
+pub fn open_dvd(stra: &str) -> Result<*mut dvd_reader_t, ()> {
     let cas = CString::new(stra).unwrap();
     let pa = &LOGGER_CB as *const _;
     let dvd = unsafe { DVDOpen2(null_mut(), pa as *const _, cas.as_ptr()) };
     if dvd.is_null() {
-        None
+        Err(())
     } else {
-        Some(dvd)
+        Ok(dvd)
     }
 }

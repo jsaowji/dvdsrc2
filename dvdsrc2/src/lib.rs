@@ -5,6 +5,8 @@ mod ifo_file;
 mod raw_ac3;
 mod raw_vob;
 
+use std::ffi::CString;
+
 use admap::*;
 use dvdsrccommon::{
     audio_demuxing::AudioFramesInfo,
@@ -22,17 +24,13 @@ use raw_ac3::*;
 use raw_vob::*;
 mod admap;
 
-use const_str::cstr;
-use vapoursynth4_rs::{
-    declare_plugin, key,
-    map::{MapMut, MapRef},
-};
+use vapoursynth4_rs::{declare_plugin, key, map::MapRef};
 use vapoursynth4_sys::VSMapAppendMode;
 
 declare_plugin!(
-    "com.jsaowji.dvdsrc2c",
-    "dvdsrc2",
-    "Dvdsrc 2nd tour",
+    c"com.jsaowji.dvdsrc2c",
+    c"dvdsrc2",
+    c"Dvdsrc 2nd tour",
     (1, 0),
     vapoursynth4_rs::VAPOURSYNTH_API_VERSION,
     0,
@@ -45,17 +43,13 @@ declare_plugin!(
     (AdmapFilter, None)
 );
 
-pub fn parse_range<'a>(input: MapRef<'a>, indexv: &IndexedVts) -> Vec<VobuRange> {
-    if let Some(e) = input.num_elements(key!("ranges")) {
+pub fn parse_range<'a>(input: MapRef<'a>, indexv: &IndexedVts) -> Result<Vec<VobuRange>, ()> {
+    Ok(if let Some(e) = input.num_elements(key!(c"ranges")) {
         let mut ranges: Vec<VobuRange> = Vec::new();
         assert_eq!(e % 2, 0);
         for i in 0..e / 2 {
-            let from = input
-                .get_int(key!("ranges"), i * 2)
-                .expect("Failed to ranges clip");
-            let to = input
-                .get_int(key!("ranges"), i * 2 + 1)
-                .expect("Failed to ranges clip");
+            let from = input.get_int(key!(c"ranges"), i * 2).map_err(|_| ())?;
+            let to = input.get_int(key!(c"ranges"), i * 2 + 1).map_err(|_| ())?;
             for a in [from, to] {
                 assert!(a >= 0);
                 assert!(a <= indexv.vobus.len() as i64);
@@ -66,7 +60,7 @@ pub fn parse_range<'a>(input: MapRef<'a>, indexv: &IndexedVts) -> Vec<VobuRange>
         ranges
     } else {
         vec![(0 as u32, indexv.vobus.len() as u32 - 1)]
-    }
+    })
 }
 
 pub struct OpenDvdVobus {
@@ -76,24 +70,26 @@ pub struct OpenDvdVobus {
     reader: CacheSeekReader<ProperDvdReader>,
 }
 
-fn open_dvd_vobus(input: MapRef<'_>) -> OpenDvdVobus {
+fn open_dvd_vobus(input: MapRef<'_>) -> Result<OpenDvdVobus, CString> {
     let dvdpath = input
-        .get_utf8(key!("path"), 0)
-        .expect("Failed to get dvdpath");
-    let vts = input.get_int(key!("vts"), 0).expect("Failed to get vts");
+        .get_utf8(key!(c"path"), 0)
+        .map_err(|_| c"Failed to get dvdpath")?;
+    let vts = input
+        .get_int(key!(c"vts"), 0)
+        .map_err(|_| c"Failed to get vts")?;
 
-    let domain = match if let Ok(e) = input.get_int(key!("domain"), 0) {
+    let domain = match if let Ok(e) = input.get_int(key!(c"domain"), 0) {
         e
     } else {
         1
     } {
         0 => DvdBlockReaderDomain::Menu,
         1 => DvdBlockReaderDomain::Title,
-        _ => panic!("invalid domain"),
+        _ => return Err(c"invalid domain".into()),
     };
     let indexv = get_index_vts(dvdpath, vts as _, domain);
 
-    let ranges = parse_range(input, &indexv);
+    let ranges = parse_range(input, &indexv).map_err(|_| c"Failed to parse ranges")?;
 
     let vobus = VobuRanger::from(&ranges, &indexv);
 
@@ -101,25 +97,25 @@ fn open_dvd_vobus(input: MapRef<'_>) -> OpenDvdVobus {
 
     let reader = OpenDvdBlockReader::new(dvd, vts as _, domain).reader;
 
-    OpenDvdVobus {
+    Ok(OpenDvdVobus {
         indexed: indexv,
         vobus,
         reader,
-    }
+    })
 }
 
-fn add_audio_props(n: i64, mut props: MapMut<'_>, ainfo: &AudioFramesInfo) {
+fn add_audio_props(n: i64, mut props: MapRef<'_>, ainfo: &AudioFramesInfo) {
     if n == 0 {
         props
             .set(
-                key!("Stuff_Start_PTS"),
+                key!(c"Stuff_Start_PTS"),
                 vapoursynth4_rs::map::Value::Int(ainfo.pts_cutoff_start as _),
                 VSMapAppendMode::Replace,
             )
             .unwrap();
         props
             .set(
-                key!("Stuff_End_PTS"),
+                key!(c"Stuff_End_PTS"),
                 vapoursynth4_rs::map::Value::Int(ainfo.pts_cut_end as _),
                 VSMapAppendMode::Replace,
             )
