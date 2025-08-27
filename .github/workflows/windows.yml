@@ -24,6 +24,7 @@ jobs:
           update: true
           install: >-
             base-devel
+            mingw-w64-ucrt-x86_64-ca-certificates
             mingw-w64-ucrt-x86_64-a52dec
             mingw-w64-ucrt-x86_64-libmpeg2-git
             mingw-w64-ucrt-x86_64-libdvdread
