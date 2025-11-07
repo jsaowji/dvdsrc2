@@ -1,4 +1,6 @@
 # dvdsrc2
+libdvdread: release 7.0.0 has problems with ISO files, either extract to folder or downgrade to 6.1.3
+
 See https://github.com/Jaded-Encoding-Thaumaturgy/vs-jetpack/tree/main/vssource for usage examples. It is not ment to be used on its own.
 
 # how to build under linux
