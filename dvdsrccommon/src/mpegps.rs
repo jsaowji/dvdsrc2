@@ -29,7 +29,11 @@ pub fn parse_pts(flag: u8, pts_bytesx: &[u8]) -> u32 {
 pub fn start_code(mut a: impl Read) -> Result<u8, std::io::Error> {
     let mut buf = [0u8; 4];
     a.read_exact(&mut buf)?;
-    assert_eq!(buf[0..3], [0, 0, 1]);
+    assert_eq!(
+        buf[0..3],
+        [0, 0, 1],
+        "Does not look like a startcode. Something went wrong while parsing the mpeg-ps stream."
+    );
     Ok(buf[3])
 }
 

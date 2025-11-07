@@ -445,7 +445,10 @@ impl Gopaliser {
             }
         }
         if ii != 0 {
-            eprintln!("WARNING: Had to use a workaround to find video start");
+            eprintln!(
+                "WARNING: Had to use a workaround to find video start offset: {}",
+                ii
+            );
         }
 
         loop {

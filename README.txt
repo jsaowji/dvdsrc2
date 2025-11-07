@@ -1,8 +1,8 @@
 # dvdsrc2
-See https://github.com/Jaded-Encoding-Thaumaturgy/vs-source for usage examples. It is not ment to be used on its own.
+See https://github.com/Jaded-Encoding-Thaumaturgy/vs-jetpack/tree/main/vssource for usage examples. It is not ment to be used on its own.
 
 # how to build under linux
-install a52dec mpeg2dec libdvdread rust from your package manager 
+install [a52dec mpeg2dec libdvdread rust] from your package manager
 cargo build --release
 
 # msys
