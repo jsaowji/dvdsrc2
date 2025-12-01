@@ -1,3 +1,7 @@
 [workspace]
-members = [ "dvdsrccommon",  "dvdsrc2" ]
+members = [
+    "dvdsrccommon",
+    "dvdsrc2",
+    "vendored_libdvdread"
+]
 resolver = "2"

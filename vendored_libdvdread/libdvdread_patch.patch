@@ -1,0 +1,13 @@
+diff --git a/src/dvd_reader.c b/src/dvd_reader.c
+index 8f791d5..9c30e72 100644
+--- a/src/dvd_reader.c
++++ b/src/dvd_reader.c
+@@ -1038,7 +1038,7 @@ static dvd_file_t *DVDOpenVOBUDF( dvd_reader_t *ctx, int title, int menu )
+ 
+     for( cur = 2; cur < 10; cur++ ) {
+       sprintf( filename, "/%s_TS/%cTS_%02d_%d.%cOB", DVD_TYPE_STRING( ctx->dvd_type ), 
+-              STREAM_TYPE_STRING( ctx->dvd_type ), title, menu ? 0 : 1, STREAM_TYPE_STRING( ctx->dvd_type ) );
++              STREAM_TYPE_STRING( ctx->dvd_type ), title, cur, STREAM_TYPE_STRING( ctx->dvd_type ) );
+       if( !UDFFindFile( ctx, filename, &len ) ) break;
+       dvd_file->filesize += len / DVD_VIDEO_LB_LEN;
+     }

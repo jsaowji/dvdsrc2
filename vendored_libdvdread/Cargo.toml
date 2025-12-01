@@ -1,0 +1,12 @@
+[package]
+name = "vendored_libdvdread"
+version = "0.1.0"
+edition = "2021"
+
+[build-dependencies]
+cc = "1.0.46"
+autotools = "0.2"
+fs_extra = "1.3.0"
+
+[features]
+vendored_libdvdread = []
