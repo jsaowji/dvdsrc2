@@ -2,6 +2,7 @@
 name = "vendored_libdvdread"
 version = "0.1.0"
 edition = "2021"
+license = "gplv2"
 
 [build-dependencies]
 cc = "1.0.46"

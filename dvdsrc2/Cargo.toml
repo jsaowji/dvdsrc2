@@ -2,6 +2,7 @@
 name = "dvdsrc2"
 version = "0.2.0"
 edition = "2021"
+license = "gplv2"
 
 [lib]
 crate-type = ["cdylib"]
