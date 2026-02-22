@@ -17,7 +17,7 @@ bincode = "2.0.0"
 
 # arch linux ships libdvdread 7.0.0 which is broken for iso files
 #vendored_libdvdread = { path = "../vendored_libdvdread", features = []}
-vendored_libdvdread = { path = "../vendored_libdvdread", features = ["vendored_libdvdread"]}
+vendored_libdvdread = { path = "../vendored_libdvdread" }
 #libarchive2 = "*"
 
 

@@ -8,8 +8,8 @@ use fs_extra::dir::CopyOptions;
 
 fn main() {
     println!("cargo::rerun-if-changed=build.rs");
-    if cfg!(feature = "vendored_libdvdread") | true {
-        println!("cargo::rerun-if-changed=libdvdread/");
+    if true {
+        println!("cargo::rerun-if-changed=dvdread/");
 
         let out_dir = std::env::var_os("OUT_DIR").expect("missing OUT_DIR");
         let out_dir = Path::new(&out_dir);
@@ -81,7 +81,6 @@ fn main() {
             .expect("fail");
         assert!(o3.status.success());
         let dst = out_install.join("lib");
-
         println!("cargo:rustc-link-search=native={}", dst.display());
     }
 
