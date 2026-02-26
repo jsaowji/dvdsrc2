@@ -57,7 +57,7 @@ fn main() {
             .arg("--prefix")
             .arg(std::path::absolute(&out_install).unwrap())
             //.args(&["-Dlibdvdcss=disabled"])
-            .args(&["-Dbuildtype=release"])
+            .args(&["-Dbuildtype=release","-Dlibdir=lib","-Dlibdvdcss=disabled")
             .output()
             .expect("fail");
         assert!(o1.status.success());
@@ -90,8 +90,7 @@ fn main() {
         println!("cargo:rustc-link-lib=static=dvdcss");
     } else {
         println!("cargo:rustc-link-lib=static=dvdread");
-        println!("cargo:rustc-link-lib=dvdcss");
-        //we can probably get away with this on linuxe: linking dvdread static and dvdcss dynamic
+        //println!("cargo:rustc-link-lib=dvdcss");
     }
 
     //if let Ok(dir) = std::env::var("MSYSTEM_PREFIX") {
