@@ -57,7 +57,7 @@ fn main() {
             .arg("--prefix")
             .arg(std::path::absolute(&out_install).unwrap())
             //.args(&["-Dlibdvdcss=disabled"])
-            .args(&["-Dbuildtype=release","-Dlibdir=lib","-Dlibdvdcss=disabled")
+            .args(&["-Dbuildtype=release","-Dlibdir=lib","-Dlibdvdcss=disabled"])
             .output()
             .expect("fail");
         assert!(o1.status.success());
