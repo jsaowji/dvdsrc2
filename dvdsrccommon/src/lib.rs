@@ -36,7 +36,6 @@ pub const LOGGER_CB: DvdLoggerCb2 = DvdLoggerCb2 {
 };
 
 pub fn open_dvd(stra: &str) -> Result<*mut dvd_reader_t, ()> {
-    vendored_libdvdread::dummy();
     let cas = CString::new(stra).unwrap();
     let pa = &LOGGER_CB as *const _;
     let dvd = unsafe { DVDOpen2(null_mut(), pa as *const _, cas.as_ptr()) };

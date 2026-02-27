@@ -7,7 +7,6 @@ For now vendored and locked as git submodule libdvdread with patch
 
 only unencrypted dvds are supported
 
-
 # how to build under linux
 install [a52dec mpeg2dec libdvdread rust] from your package manager
 cargo build --release

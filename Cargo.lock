@@ -114,7 +114,7 @@ dependencies = [
 
 [[package]]
 name = "dvdsrc2"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "const-str",
  "dvdsrccommon",
@@ -124,16 +124,17 @@ dependencies = [
 
 [[package]]
 name = "dvdsrccommon"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "bincode",
  "byteorder",
  "home",
- "pkg-config",
+ "liba52-sys",
+ "libdvdread-sys",
+ "libmpeg2-sys",
  "serde",
  "serde_derive",
  "serde_json",
- "vendored_libdvdread",
 ]
 
 [[package]]
@@ -170,10 +171,21 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "49f1f14873335454500d59611f1cf4a4b0f786f9ac11f4312a78e4cf2566695b"
 
 [[package]]
-name = "pkg-config"
-version = "0.3.27"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "26072860ba924cbfa98ea39c8c19b4dd6a4a25423dbdf219c1eca91aa0cf6964"
+name = "liba52-sys"
+version = "0.3.0"
+
+[[package]]
+name = "libdvdread-sys"
+version = "0.3.0"
+dependencies = [
+ "autotools",
+ "cc",
+ "fs_extra",
+]
+
+[[package]]
+name = "libmpeg2-sys"
+version = "0.3.0"
 
 [[package]]
 name = "prettyplease"
@@ -315,15 +327,6 @@ dependencies = [
 name = "vapoursynth4-sys"
 version = "0.3.1"
 source = "git+http://github.com/inflation/vapoursynth4-rs?rev=5685213b75cef2c8ae3e49ed60c71cb7258bc1a5#5685213b75cef2c8ae3e49ed60c71cb7258bc1a5"
-
-[[package]]
-name = "vendored_libdvdread"
-version = "0.1.0"
-dependencies = [
- "autotools",
- "cc",
- "fs_extra",
-]
 
 [[package]]
 name = "virtue"

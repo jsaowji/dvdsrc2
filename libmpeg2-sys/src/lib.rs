@@ -1,3 +1,7 @@
+#![allow(non_camel_case_types)]
+#![allow(non_upper_case_globals)]
+#![allow(non_snake_case)]
+
 pub const SEQ_FLAG_MPEG2: u32 = 1;
 pub const SEQ_FLAG_CONSTRAINED_PARAMETERS: u32 = 2;
 pub const SEQ_FLAG_PROGRESSIVE_SEQUENCE: u32 = 4;

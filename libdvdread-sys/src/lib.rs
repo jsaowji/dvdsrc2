@@ -1,3 +1,10 @@
+#![allow(non_camel_case_types)]
+#![allow(non_upper_case_globals)]
+#![allow(non_snake_case)]
+
+//TODO: this has linux specific stuff like "__gnuc_va_list"
+// how does this work for windows ?
+
 pub type __off_t = ::std::os::raw::c_long;
 pub type __off64_t = ::std::os::raw::c_long;
 pub type off_t = __off_t;

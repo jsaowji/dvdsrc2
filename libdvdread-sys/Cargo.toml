@@ -1,6 +1,6 @@
 [package]
-name = "vendored_libdvdread"
-version = "0.1.0"
+name = "libdvdread-sys"
+version = "0.3.0"
 edition = "2021"
 license = "gplv2"
 

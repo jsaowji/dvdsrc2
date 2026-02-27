@@ -1,5 +1,5 @@
 #include <stdint.h>
-#if WINDOWWS
+#if WINDOWS
 #include <a52.h>
 #else
 #include <a52dec/a52.h>

@@ -2,6 +2,8 @@
 members = [
     "dvdsrccommon",
     "dvdsrc2",
-    "vendored_libdvdread"
+    "libdvdread-sys",
+    "libmpeg2-sys",
+    "liba52-sys",
 ]
 resolver = "2"

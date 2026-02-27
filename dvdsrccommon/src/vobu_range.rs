@@ -24,6 +24,7 @@ impl VobuRanger {
         }
         return voburan;
     }
+
     pub fn full(vts: &IndexedVts) -> Vec<EVobu> {
         return Self::from(&[(0, vts.vobus.len() as u32 - 1)], vts);
     }
