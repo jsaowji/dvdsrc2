@@ -24,6 +24,7 @@ jobs:
         CIBW_SKIP: cp314-musllinux*
         CIBW_BUILD_FRONTEND: uv
         CIBW_BEFORE_ALL_LINUX: >
+          dnf -y install meson gcc libmpeg2-devel cargo rust &&
           git clone https://github.com/jsaowji/libdvdread.git --branch master --depth 1 &&
           cd libdvdread &&
           meson build -D libdvdcss=disabled -Dprefix=/usr &&
@@ -40,9 +41,7 @@ jobs:
               --enable-shared \
               --enable-static &&
           make &&
-          make install &&
-          cd .. &&
-          dnf -y install libmpeg2-devel cargo rust
+          make install
       with:
         output-dir: dist
         extras: uv
@@ -87,6 +86,10 @@ jobs:
           mingw-w64-ucrt-x86_64-meson
           mingw-w64-ucrt-x86_64-ninja
           mingw-w64-ucrt-x86_64-pkgconf
+          mingw-w64-ucrt-x86_64-toolchain
+          mingw-w64-ucrt-x86_64-uv
+          mingw-w64-ucrt-x86_64-git
+          mingw-w64-ucrt-x86_64-cmake
           git
 
     - name: Install libdvdread
