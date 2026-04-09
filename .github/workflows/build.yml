@@ -25,7 +25,18 @@ jobs:
         CIBW_BUILD: cp314-*
         CIBW_BUILD_FRONTEND: uv
         CIBW_BEFORE_ALL_LINUX: >
-          dnf -y install libmpeg2-devel liba52-devel libdvdread-devel cargo
+          git clone https://git.adelielinux.org/community/a52dec.git --depth 1 &&
+          cd a52dec &&
+          autoreconf -fiv &&
+          ./configure \
+              --prefix=/usr \
+              --sysconfdir=/etc \
+              --localstatedir=/var \
+              --enable-shared \
+              --enable-static &&
+          make &&
+          make install &&
+          dnf -y install libmpeg2-devel libdvdread-devel cargo rust
       with:
         output-dir: dist
         extras: uv
