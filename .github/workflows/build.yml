@@ -27,6 +27,7 @@ jobs:
           dnf -y install meson gcc libmpeg2-devel cargo rust &&
           git clone https://github.com/jsaowji/libdvdread.git --branch master --depth 1 &&
           cd libdvdread &&
+          sed -i -e 's/0.60.0/0.58.2/g' meson.build &&
           meson build -D libdvdcss=disabled -Dprefix=/usr &&
           meson compile -C build &&
           meson install -C build &&
@@ -77,7 +78,6 @@ jobs:
         install: >-
           base-devel
           mingw-w64-ucrt-x86_64-ca-certificates
-          mingw-w64-ucrt-x86_64-a52dec
           mingw-w64-ucrt-x86_64-libmpeg2-git
           mingw-w64-ucrt-x86_64-rust
           mingw-w64-ucrt-x86_64-jq
@@ -92,13 +92,29 @@ jobs:
           mingw-w64-ucrt-x86_64-cmake
           git
 
+    - name: Install a52dec
+      run: |
+        git clone https://github.com/jsaowji/a52dec.git --branch master --depth 1
+        pushd a52dec/
+        autoreconf -fiv
+        ./configure \
+              --prefix=/ucrt64 \
+              --sysconfdir=/etc \
+              --localstatedir=/var \
+              --enable-shared \
+              --enable-static
+        make
+        make install
+        popd
+        rm -rf a52dec
+
     - name: Install libdvdread
       run: |
         git clone https://github.com/jsaowji/libdvdread.git --branch master --depth 1
         pushd libdvdread/
-        meson build -D libdvdcss=disabled -Dprefix=/ucrt64 &&
-        meson compile -C build &&
-        meson install -C build &&
+        meson build -D libdvdcss=disabled -Dprefix=/ucrt64
+        meson compile -C build
+        meson install -C build
         popd
         rm -rf libdvdread
 
