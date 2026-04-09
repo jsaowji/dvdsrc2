@@ -25,7 +25,7 @@ jobs:
         CIBW_BUILD: cp314-*
         CIBW_BUILD_FRONTEND: uv
         CIBW_BEFORE_ALL_LINUX: >
-          git clone https://git.adelielinux.org/community/a52dec.git --depth 1 &&
+          git clone https://github.com/jsaowji/a52dec.git --depth 1 &&
           cd a52dec &&
           autoreconf -fiv &&
           ./configure \
