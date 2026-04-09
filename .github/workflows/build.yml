@@ -1,6 +1,6 @@
 name: Build
 
-on: [push, pull_request, workflow_dispatch]
+on: [workflow_dispatch]
 
 jobs:
   build-non-windows-wheel:
@@ -94,7 +94,7 @@ jobs:
 
     - name: Install a52dec
       run: |
-        git clone https://github.com/jsaowji/a52dec.git --branch master --depth 1
+        git clone https://github.com/jsaowji/a52dec.git --depth 1
         pushd a52dec/
         autoreconf -fiv
         ./configure \
