@@ -23,6 +23,7 @@ jobs:
     - uses: pypa/cibuildwheel@v3.4.0
       env:
         CIBW_BUILD: cp314-*
+        CIBW_SKIP: cp314-musllinux*
         CIBW_BUILD_FRONTEND: uv
         CIBW_BEFORE_ALL_LINUX: >
           git clone https://github.com/jsaowji/a52dec.git --depth 1 &&
