@@ -1,8 +1,6 @@
+use pkg_config::Config;
+
 fn main() {
-    if let Ok(dir) = std::env::var("MSYSTEM_PREFIX") {
-        println!("cargo:rustc-link-search=native={}/lib", dir);
-        println!("cargo:rustc-link-lib=static=mpeg2");
-    } else {
-        println!("cargo:rustc-link-lib=mpeg2");
-    }
+    println!("cargo::rerun-if-changed=build.rs");
+    Config::new().probe("libmpeg2").unwrap();
 }

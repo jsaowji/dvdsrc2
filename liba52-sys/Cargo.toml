@@ -3,3 +3,6 @@ name = "liba52-sys"
 version = "0.3.0"
 edition = "2021"
 license = "gplv2"
+
+[build-dependencies]
+pkg-config = "0.3.32"

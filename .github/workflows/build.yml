@@ -1,0 +1,43 @@
+name: Build
+
+on: [push, pull_request, workflow_dispatch]
+
+jobs:
+  build-non-windows-wheel:
+    strategy:
+      matrix:
+        include:
+        - arch: linux_x86_64
+          runs-on: ubuntu-latest
+        - arch: linux_aarch64
+          runs-on: ubuntu-24.04-arm
+      fail-fast: false
+
+    runs-on: ${{ matrix.runs-on }}
+
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        submodules: recursive
+
+    - uses: pypa/cibuildwheel@v3.4.0
+      env:
+        CIBW_BUILD: cp314-*
+        CIBW_BUILD_FRONTEND: uv
+        CIBW_BEFORE_ALL_LINUX: >
+          dnf -y install libmpeg2-devel liba52-devel libdvdread-devel cargo
+      with:
+        output-dir: dist
+        extras: uv
+
+    - name: Fix tag
+      run: |
+        cd dist
+        for whl in *.whl; do
+          pipx run wheel tags --remove --python-tag py3 --abi-tag none $whl
+        done
+
+    - uses: actions/upload-artifact@v7
+      with:
+        name: dvdsrc2-${{ matrix.arch }}
+        path: dist

@@ -1,0 +1,26 @@
+[build-system]
+requires = ["hatchling", "packaging"]
+build-backend = "hatchling.build"
+
+[project]
+name = "vapoursynth-dvdsrc2"
+version = "1.0"
+description = "Vapoursynth libmpeg2 & libdvdread wrapper"
+requires-python = ">=3.12"
+readme = "README.txt"
+license-files = ["LICENSE"]
+authors = [ ]
+maintainers = [ ]
+
+dependencies = ["vapoursynth>=74"]
+
+[tool.hatch.build.targets.wheel]
+include = ["vapoursynth/plugins"]
+artifacts = [
+    "vapoursynth/plugins/*.dylib",
+    "vapoursynth/plugins/*.so",
+    "vapoursynth/plugins/*.dll",
+]
+
+[tool.hatch.build.targets.wheel.hooks.custom]
+path = "hatch_build.py"

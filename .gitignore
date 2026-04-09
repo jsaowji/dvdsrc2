@@ -11,3 +11,6 @@ tmp/
 windows_libs/
 myapp.tar.gz
 winbuild/
+
+__pycache__/
+uv.lock
