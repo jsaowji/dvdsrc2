@@ -1,6 +1,6 @@
 name: Build
 
-on: [workflow_dispatch]
+on: [push, pull_request, workflow_dispatch]
 
 jobs:
   build-non-windows-wheel:
@@ -98,6 +98,7 @@ jobs:
         pushd a52dec/
         autoreconf -fiv
         ./configure \
+              CFLAGS="-D__CRT__NO_INLINE=1 -std=gnu17" \
               --prefix=/ucrt64 \
               --sysconfdir=/etc \
               --localstatedir=/var \
