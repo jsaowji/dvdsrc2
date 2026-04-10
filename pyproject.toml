@@ -4,13 +4,11 @@ build-backend = "hatchling.build"
 
 [project]
 name = "vapoursynth-dvdsrc2"
-version = "1.0"
+version = "3.0"
 description = "Vapoursynth libmpeg2 & libdvdread wrapper"
 requires-python = ">=3.12"
 readme = "README.txt"
 license-files = ["LICENSE"]
-authors = [ ]
-maintainers = [ ]
 
 dependencies = ["vapoursynth>=74"]
 
