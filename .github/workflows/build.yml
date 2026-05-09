@@ -29,17 +29,20 @@ jobs:
     runs-on: ${{ matrix.runs-on }}
 
     steps:
-    - uses: actions/checkout@v6
+    - uses: https://github.com/actions/checkout@v6
       with:
         submodules: recursive
 
-    - uses: pypa/cibuildwheel@v3.4.0
+    - uses: https://github.com/pypa/cibuildwheel@v3.4.0
       env:
         CIBW_BUILD: cp314-*
-        CIBW_SKIP: cp314-musllinux*
         CIBW_BUILD_FRONTEND: uv
         CIBW_BEFORE_ALL_LINUX: >
-          dnf -y install meson gcc libmpeg2-devel cargo rust &&
+          if command -v dnf >/dev/null 2>&1; then
+            dnf -y install meson gcc libmpeg2-devel cargo rust
+          else
+            apk add --no-cache meson gcc libmpeg2-dev cargo rust
+          fi &&
           git clone https://github.com/jsaowji/libdvdread.git --branch master --depth 1 &&
           cd libdvdread &&
           sed -i -e 's/0.60.0/0.58.2/g' meson.build &&
@@ -69,7 +72,7 @@ jobs:
           pipx run wheel tags --remove --python-tag py3 --abi-tag none $whl
         done
 
-    - uses: actions/upload-artifact@v7
+    - uses: https://github.com/actions/upload-artifact@v7
       with:
         name: dvdsrc2-${{ matrix.arch }}
         path: dist
