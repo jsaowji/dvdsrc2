@@ -43,7 +43,7 @@ jobs:
           else
             apk add --no-cache meson gcc libmpeg2-dev rustup
             rustup-init -y
-            source "$HOME/.cargo/env"
+            ln -s $HOME/.cargo/bin/* /usr/bin/
           fi &&
           git clone https://github.com/jsaowji/libdvdread.git --branch master --depth 1 &&
           cd libdvdread &&
