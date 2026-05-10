@@ -37,12 +37,13 @@ jobs:
       env:
         CIBW_BUILD: cp314-*
         CIBW_BUILD_FRONTEND: uv
-        CIBW_MUSLLINUX_X86_64_IMAGE: alpine:3.23
         CIBW_BEFORE_ALL_LINUX: >
           if command -v dnf >/dev/null 2>&1; then
             dnf -y install meson gcc libmpeg2-devel cargo rust
           else
-            apk add --no-cache meson gcc libmpeg2-dev cargo rust
+            apk add --no-cache meson gcc libmpeg2-dev rustup
+            rustup-init -y
+            source "$HOME/.cargo/env"
           fi &&
           git clone https://github.com/jsaowji/libdvdread.git --branch master --depth 1 &&
           cd libdvdread &&
