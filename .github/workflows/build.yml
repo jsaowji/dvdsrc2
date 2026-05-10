@@ -41,7 +41,7 @@ jobs:
           if command -v dnf >/dev/null 2>&1; then
             dnf -y install meson gcc libmpeg2-devel cargo rust
           else
-            apk add --no-cache meson gcc libmpeg2-dev rustup
+            apk add --no-cache meson gcc libmpeg2-dev rustup automake autoconf libtool build-base linux-headers
             rustup-init -y
             ln -s $HOME/.cargo/bin/* /usr/bin/
           fi &&
