@@ -86,9 +86,9 @@ jobs:
           git clone https://github.com/jsaowji/a52dec.git --depth 1 &&
           cd a52dec &&
           autoreconf -fiv &&
-          ./configure \
+          CFLAGS=-std=gnu89 ./configure \
               --enable-shared \
-              --enable-static &&
+              --disable-silent-rules &&
           make &&
           sudo make install &&
           cd .. &&
