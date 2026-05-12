@@ -74,7 +74,7 @@ jobs:
           cd .. &&
           rm -rf a52dec
         CIBW_BEFORE_ALL_MACOS: >
-          brew install libmpeg2 meson pkgconf rust &&
+          brew install libmpeg2 meson pkgconf rust autoconf automake &&
           git clone https://github.com/jsaowji/libdvdread.git --branch master --depth 1 &&
           cd libdvdread &&
           sed -i -e 's/0.60.0/0.58.2/g' meson.build &&
