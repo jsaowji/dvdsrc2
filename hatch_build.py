@@ -6,7 +6,7 @@ from typing import Any
 import os
 from hatchling.builders.hooks.plugin.interface import BuildHookInterface
 from packaging import tags
-
+import platform
 
 class CustomHook(BuildHookInterface[Any]):
     source_dir = Path("target/release/")
@@ -18,6 +18,9 @@ class CustomHook(BuildHookInterface[Any]):
         envs = {}
         if "musllinux" in ptag:
             envs = { "RUSTFLAGS": "-C target-feature=-crt-static"}
+        if platform.system() == "Darwin":
+            envs = { "RUSTFLAGS": "-C link-arg=-headerpad_max_install_names"}
+
         build_data["tag"] = f"py3-none-{ptag}"
         subprocess.run(["cargo", "build", "--release"], env=envs | os.environ, check=True)
         self.target_dir.mkdir(parents=True, exist_ok=True)
