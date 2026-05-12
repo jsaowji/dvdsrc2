@@ -8,7 +8,7 @@ It is not ment to be used on its own.
 libdvdread: release 7.0.0 has problems with ISO files,
 Current master depends on 7.1.0 (libdvdread-git) which has the fix but has no offical release yet.
 
-currently macos builds are missing from pypi
+macos and musllinux builds are provided with best effort only
 
 CI builds have libdvdcss disabled,
 if you you want to use you're distro provided libdvdread you can build the package from git or sdist
