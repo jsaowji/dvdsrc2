@@ -32,6 +32,7 @@ struct FullFilterMutStuff {
 
 pub struct FullVtsFilterAc3 {
     ai: AudioInfo,
+    channel_map: Vec<usize>,
     //vts: IndexedVts,
     mut_stuff: Arc<Mutex<FullFilterMutStuff>>,
 }
@@ -63,8 +64,8 @@ impl Filter for FullVtsFilterAc3 {
             );
 
             let flags = ac3info.ac3_fingerprint.0 as u32;
-            let (num_channels, channel_layout) = if flags == a52::A52_STEREO {
-                (2, 3)
+            let (num_channels, channel_layout, channel_map) = if flags == a52::A52_STEREO {
+                (2, 3, vec![0, 1])
             } else if flags == a52::A52_3F2R + a52::A52_LFE {
                 (
                     6,
@@ -74,6 +75,7 @@ impl Filter for FullVtsFilterAc3 {
                         + (1 << VSAudioChannels::LowFrequency as u32)
                         + (1 << VSAudioChannels::SideLeft as u32)
                         + (1 << VSAudioChannels::SideRight as u32),
+                    vec![1, 3, 2, 0, 4, 5],
                 )
             } else if flags == a52::A52_3F2R {
                 (
@@ -83,6 +85,7 @@ impl Filter for FullVtsFilterAc3 {
                         + (1 << VSAudioChannels::FrontCenter as u32)
                         + (1 << VSAudioChannels::SideLeft as u32)
                         + (1 << VSAudioChannels::SideRight as u32),
+                    vec![0, 2, 1, 3, 4],
                 )
             } else {
                 unreachable!();
@@ -115,6 +118,7 @@ impl Filter for FullVtsFilterAc3 {
                 };
                 let filter = FullVtsFilterAc3 {
                     ai: ai.clone(),
+                    channel_map,
                     // vts: indexv,
                     mut_stuff: Arc::new(Mutex::new(mutdata)),
                 };
@@ -212,10 +216,10 @@ impl Filter for FullVtsFilterAc3 {
 
             for blk in 0..6 {
                 a52::a52_block(a52_decoder);
-                for ch in 0..channel_cnt {
+                for (ch, source_ch) in self.channel_map.iter().copied().enumerate() {
                     for a1 in 0..256 {
-                        *(wps[ch as usize].offset(blk * 256 + a1)) =
-                            *samples.offset(a1 as isize + 256 * ch as isize);
+                        *(wps[ch].offset(blk * 256 + a1)) =
+                            *samples.offset(a1 as isize + 256 * source_ch as isize);
                     }
                 }
             }
@@ -235,10 +239,10 @@ impl Filter for FullVtsFilterAc3 {
                 for blk in 0..6 {
                     let _ = a52::a52_block(a52_decoder);
 
-                    for ch in 0..channel_cnt {
+                    for (ch, source_ch) in self.channel_map.iter().copied().enumerate() {
                         for a1 in 0..256 {
-                            *(wps[ch as usize].offset(blk * 256 + a1 + 256 * 6)) =
-                                *samples.offset(a1 as isize + 256 * ch as isize);
+                            *(wps[ch].offset(blk * 256 + a1 + 256 * 6)) =
+                                *samples.offset(a1 as isize + 256 * source_ch as isize);
                         }
                     }
                 }
