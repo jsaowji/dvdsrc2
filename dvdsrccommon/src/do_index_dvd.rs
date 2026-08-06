@@ -415,7 +415,7 @@ fn do_index(
 
     return Ok(IndexedVts {
         vobus,
-        total_size_blocks: maxsize as u32 / 2048,
+        total_size_blocks: (maxsize / 2048) as u32,
     });
 }
 
