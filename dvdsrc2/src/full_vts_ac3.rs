@@ -220,7 +220,7 @@ impl Filter for FullVtsFilterAc3 {
                 }
             }
 
-            if !is_lastt {
+            if inner_frame + 1 < ac3info.frame_cnt as u64 {
                 ac3info
                     .reader
                     .seek(SeekFrom::Start(
