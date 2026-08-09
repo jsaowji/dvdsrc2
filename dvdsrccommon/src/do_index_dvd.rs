@@ -347,7 +347,6 @@ fn do_index(
                         if current_vobu.streams.iter().find(|e| e.id == id).is_none() {
                             current_vobu.streams.push(Stream {
                                 id,
-                                first_ptm: pes.pts.unwrap(),
                                 packets: AudioStreamPackets::default(),
                             });
                         }

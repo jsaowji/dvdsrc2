@@ -25,8 +25,6 @@ pub struct AudioStreamPackets {
 #[derive(Default, Clone, Debug, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
 pub struct Stream {
     pub id: u8,
-    pub first_ptm: u32,
-
     pub packets: AudioStreamPackets,
 }
 
