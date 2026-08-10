@@ -23,7 +23,7 @@ impl IndexManager {
 
         let mut hasher = DefaultHasher::new();
         a.as_ref().hash(&mut hasher);
-        "version0".hash(&mut hasher);
+        "version1".hash(&mut hasher);
 
         return self.md.join(format!("{:x}", hasher.finish()));
     }
