@@ -101,37 +101,49 @@ pub fn raw_audio_frames_init(
         }
     }
 
-    //TODO: rename this to sth like first vobu with acual data
-    let mut vobu0_idx = 0;
-    let mut vobu0strems = vobus[0].v.streams.iter().find(|e| e.id == real_stream_idx);
-    let mut elapsed = 0;
-    //TODO: this is wrong probably
+    let has_requested_audio = |vobu: &EVobu| {
+        vobu.v
+            .streams
+            .iter()
+            .any(|stream| stream.id == real_stream_idx)
+    };
+    let first_audio_vobu_idx = vobus
+        .iter()
+        .position(&has_requested_audio)
+        .expect("Didn't find requested audio in any selected VOBU");
+    let last_audio_vobu_idx = vobus
+        .iter()
+        .rposition(has_requested_audio)
+        .expect("Didn't find requested audio in any selected VOBU");
 
-    if vobu0strems.is_none() {
-        eprintln!("Didn't find requested audio in first VOBU ({}), checking next vobus; Output will probably be wrong",vobus.len());
-        elapsed += vobus[0].v.last_ptm - vobus[0].v.first_ptm;
-
-        for a in 1..vobus.len() {
-            vobu0_idx = a;
-            vobu0strems = vobus[a].v.streams.iter().find(|e| e.id == real_stream_idx);
-            if vobu0strems.is_some() {
-                eprintln!("Found audio in vobu {}", a);
-                break;
-            }
-            elapsed += vobus[0].v.last_ptm - vobus[0].v.first_ptm;
-        }
-        assert!(vobu0strems.is_some());
+    if first_audio_vobu_idx != 0 {
+        eprintln!(
+            "Didn't find requested audio in first VOBU ({}), using VOBU {}",
+            vobus.len(),
+            first_audio_vobu_idx
+        );
     }
-    let vobu0strems = vobu0strems.unwrap();
+    let elapsed = vobus[..first_audio_vobu_idx]
+        .iter()
+        .map(|vobu| vobu.v.last_ptm - vobu.v.first_ptm)
+        .sum::<u32>();
+    let first_audio_stream = vobus[first_audio_vobu_idx]
+        .v
+        .streams
+        .iter()
+        .find(|stream| stream.id == real_stream_idx)
+        .unwrap();
 
-    let mut stream_buffer = Vec::with_capacity(vobu0strems.packets.total_bytes as _);
+    let mut stream_buffer = Vec::with_capacity(first_audio_stream.packets.total_bytes as _);
 
     reader
-        .seek(SeekFrom::Start(vobus[0].v.sector_start as u64 * 2048))
+        .seek(SeekFrom::Start(
+            vobus[first_audio_vobu_idx].v.sector_start as u64 * 2048,
+        ))
         .unwrap();
     demux_audio(
         &mut reader,
-        vobu0strems.packets.total_bytes as _,
+        first_audio_stream.packets.total_bytes as _,
         &mut stream_buffer,
         real_stream_idx as _,
         false,
@@ -152,7 +164,7 @@ pub fn raw_audio_frames_init(
 
     if is_ac3 {
         let ss = determine_packet_length_ac3(
-            &mut stream_buffer[vobu0strems.packets.know_units[0].offset as usize..],
+            &mut stream_buffer[first_audio_stream.packets.know_units[0].offset as usize..],
         );
         packet_lenght = ss.0;
         //   cutable_sample_length  = ss.0;
@@ -188,18 +200,19 @@ pub fn raw_audio_frames_init(
     let mut start_byte_offset = 0;
     let mut start_offset_pts = 0;
 
-    'outer: for (_, a) in vobu0strems.packets.know_units.iter().enumerate() {
+    'outer: for (_, a) in first_audio_stream.packets.know_units.iter().enumerate() {
         //dbg!(a.pts, vobus[0].first_ptm);
         for j in 0..a.frame_cnt as u32 {
             let frame_length = codec_packet_length;
             let frame_start = a.pts + frame_length * (j);
             let frame_end = a.pts + frame_length * (j + 1);
 
-            if frame_end >= vobus[vobu0_idx].v.first_ptm {
+            if frame_end >= vobus[first_audio_vobu_idx].v.first_ptm {
                 //TODO: this can be improved
                 //if is_ac3 {
-                start_offset_pts =
-                    vobus[vobu0_idx].v.first_ptm as i32 - frame_start as i32 + elapsed as i32;
+                start_offset_pts = vobus[first_audio_vobu_idx].v.first_ptm as i32
+                    - frame_start as i32
+                    + elapsed as i32;
                 start_byte_offset =
                     a.offset + j * packet_lenght as u32 - if is_lpcm { 3 } else { 0 };
                 //} else if is_lpcm{
@@ -214,11 +227,10 @@ pub fn raw_audio_frames_init(
 
     let mut audioframevobus = Vec::new();
 
-    //TODO: LAST WITH AUDIO
     let mut sz = 0;
     let last_i = vobus.len() - 1;
     for v in vobus.iter().enumerate() {
-        let is_last = v.0 == last_i;
+        let is_last_audio_vobu = v.0 == last_audio_vobu_idx;
         let aua = v.1.v.streams.iter().find(|e| e.id == real_stream_idx);
         if aua.is_none() {
             eprintln!(
@@ -238,11 +250,15 @@ pub fn raw_audio_frames_init(
             };
 
         let mut demuxed_size = real_demuxed_size;
-        let cut_front = if v.0 == 0 { start_byte_offset } else { 0 };
+        let cut_front = if v.0 == first_audio_vobu_idx {
+            start_byte_offset
+        } else {
+            0
+        };
         let mut cut_back = real_demuxed_size;
         demuxed_size -= cut_front;
 
-        if is_last {
+        if is_last_audio_vobu {
             let endpos = sz + demuxed_size;
             let tomuch = endpos % packet_lenght as u32;
             demuxed_size -= tomuch;
