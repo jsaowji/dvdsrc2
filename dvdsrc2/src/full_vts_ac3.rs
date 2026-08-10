@@ -247,6 +247,7 @@ impl Filter for FullVtsFilterAc3 {
                     }
                 }
             }
+            stuff.latest_n = n;
             return Ok(Some(newframe));
         }
     }
