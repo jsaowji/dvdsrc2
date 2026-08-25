@@ -16,7 +16,9 @@ class CustomHook(BuildHookInterface[Any]):
         build_data["pure_python"] = False
         ptag = next(tags.platform_tags())
         envs = {}
-        if "musllinux" in ptag:
+
+        print(ptag)
+        if "musllinux" in ptag or os.path.exists("/sbin/apk"):#why the fuckckckckckckckkckckc did this ptag check break, assume alpine if apk is installed
             envs = { "RUSTFLAGS": "-C target-feature=-crt-static"}
         if platform.system() == "Darwin":
             envs = { "RUSTFLAGS": "-C link-arg=-headerpad_max_install_names"}
