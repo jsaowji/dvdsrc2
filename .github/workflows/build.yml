@@ -135,7 +135,7 @@ jobs:
 
     - name: Install a52dec
       run: |
-        git clone https://github.com/jsaowji/a52dec.git --depth 10
+        git clone https://github.com/jsaowji/a52dec.git
         git checkout c388f3b6d911c246e0b2a7b2c436c3de2e79c74d
         pushd a52dec/
         autoreconf -fiv
