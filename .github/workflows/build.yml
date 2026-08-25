@@ -133,6 +133,24 @@ jobs:
           mingw-w64-ucrt-x86_64-cmake
           git
 
+    - name: Install a52dec
+      run: |
+        git clone https://github.com/jsaowji/a52dec.git --depth 10
+        git checkout c388f3b6d911c246e0b2a7b2c436c3de2e79c74d
+        pushd a52dec/
+        autoreconf -fiv
+        ./configure \
+              CFLAGS="-D__CRT__NO_INLINE=1 -std=gnu17" \
+              --prefix=/ucrt64 \
+              --sysconfdir=/etc \
+              --localstatedir=/var \
+              --enable-shared \
+              --enable-static
+        make
+        make install
+        popd
+        rm -rf a52dec
+
     - name: Install libdvdread
       run: |
         git clone https://github.com/jsaowji/libdvdread.git --branch master --depth 1
