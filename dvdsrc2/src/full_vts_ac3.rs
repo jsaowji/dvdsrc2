@@ -25,6 +25,7 @@ struct FullFilterMutStuff {
     ac3info: AudioFramesInfo,
 
     a52_decoder: *mut a52::a52_state_t,
+    drc_scale: f32,
     latest_n: i32,
 
     buffer: Vec<u8>,
@@ -49,6 +50,11 @@ impl Filter for FullVtsFilterAc3 {
         mut core: CoreRef,
     ) -> Result<(), Self::Error> {
         unsafe {
+            let drc_scale = input.get_float(key!(c"drc_scale"), 0).unwrap_or(0.0);
+            if !(0.0..=1.0).contains(&drc_scale) {
+                return Err(c"drc_scale must be between 0.0 and 1.0".into());
+            }
+
             let open_dvd_vobus = open_dvd_vobus(input)?;
             let reader = open_dvd_vobus.reader;
             let audio = input
@@ -112,6 +118,7 @@ impl Filter for FullVtsFilterAc3 {
 
                 let mutdata = FullFilterMutStuff {
                     a52_decoder: a52::a52_init(0),
+                    drc_scale: drc_scale as f32,
                     buffer: vec![0u8; ac3info.frame_length as usize],
                     ac3info,
                     latest_n: i32::MAX / 2,
@@ -153,6 +160,7 @@ impl Filter for FullVtsFilterAc3 {
             let mut stuff = self.mut_stuff.lock().unwrap();
             let mut buffer = stuff.buffer.clone();
             let a52_decoder = stuff.a52_decoder;
+            let drc_scale = &mut stuff.drc_scale as *mut f32;
             let latest_n = stuff.latest_n;
 
             let ac3info: &mut AudioFramesInfo = &mut stuff.ac3info;
@@ -189,7 +197,13 @@ impl Filter for FullVtsFilterAc3 {
                     .reader
                     .read_exact(&mut buffer[0..ac3info.frame_length as usize])
                     .unwrap();
-                buffer_block(a52_decoder, buffer.as_mut_ptr(), ac3info, &mut level);
+                buffer_block(
+                    a52_decoder,
+                    buffer.as_mut_ptr(),
+                    ac3info,
+                    &mut level,
+                    drc_scale,
+                );
                 for _ in 0..6 {
                     a52::a52_block(a52_decoder);
                 }
@@ -208,7 +222,13 @@ impl Filter for FullVtsFilterAc3 {
 
             let samples = a52::a52_samples(a52_decoder);
 
-            buffer_block(a52_decoder, buffer.as_mut_ptr(), ac3info, &mut level);
+            buffer_block(
+                a52_decoder,
+                buffer.as_mut_ptr(),
+                ac3info,
+                &mut level,
+                drc_scale,
+            );
 
             let wps: Vec<*mut f32> = (0..channel_cnt)
                 .map(|e| newframe.channel_mut(e) as *mut f32)
@@ -235,7 +255,13 @@ impl Filter for FullVtsFilterAc3 {
                     .reader
                     .read_exact(&mut buffer[0..ac3info.frame_length as usize])
                     .unwrap();
-                buffer_block(a52_decoder, buffer.as_mut_ptr(), ac3info, &mut level);
+                buffer_block(
+                    a52_decoder,
+                    buffer.as_mut_ptr(),
+                    ac3info,
+                    &mut level,
+                    drc_scale,
+                );
                 for blk in 0..6 {
                     let _ = a52::a52_block(a52_decoder);
 
@@ -254,7 +280,7 @@ impl Filter for FullVtsFilterAc3 {
 
     const NAME: &'static CStr = cstr!("FullVtsAc3");
     const ARGS: &'static CStr =
-        cstr!("path:data;vts:int;audio:int;ranges:int[]:opt;domain:int:opt");
+        cstr!("path:data;vts:int;audio:int;ranges:int[]:opt;domain:int:opt;drc_scale:float:opt");
     const RETURN_TYPE: &'static CStr = cstr!("clip:anode;");
     const FILTER_MODE: FilterMode = FilterMode::Unordered;
 }
@@ -264,6 +290,7 @@ fn buffer_block(
     buffer_ptr: *mut u8,
     ac3info: &mut AudioFramesInfo,
     level: &mut f32,
+    drc_scale: *mut f32,
 ) {
     unsafe {
         let (mut flags, mut sample_rate, mut bit_rate) = (0, 0, 0);
@@ -282,5 +309,11 @@ fn buffer_block(
             level,
             0.0,
         );
+
+        a52::a52_dynrng(a52_decoder, Some(adjust_drc), drc_scale.cast());
     }
+}
+
+unsafe extern "C" fn adjust_drc(compression: f32, data: *mut c_void) -> f32 {
+    compression.powf(unsafe { *data.cast::<f32>() })
 }
